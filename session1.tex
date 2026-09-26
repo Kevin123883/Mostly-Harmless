@@ -1,0 +1,2735 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% =========================================================
+% Packages
+% =========================================================
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% =========================================================
+% Theme
+% =========================================================
+\usetheme{Boadilla}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{DeepBlue}{RGB}{28,66,120}
+\definecolor{DarkGray}{RGB}{55,55,55}
+\definecolor{SoftGray}{RGB}{242,242,242}
+\definecolor{DarkRed}{RGB}{155,45,45}
+\definecolor{DarkGreen}{RGB}{35,110,75}
+
+\setbeamercolor{structure}{fg=DeepBlue}
+\setbeamercolor{frametitle}{fg=DeepBlue}
+\setbeamercolor{title}{fg=DeepBlue}
+\setbeamercolor{block title}{bg=DeepBlue!12,fg=DeepBlue}
+\setbeamercolor{block body}{bg=DeepBlue!3,fg=black}
+\setbeamercolor{alerted text}{fg=DarkRed}
+
+% =========================================================
+% Layout tuning (compact vertical rhythm)
+% =========================================================
+\setbeamersize{text margin left=1.1em,text margin right=1.1em}
+
+% Many slides contain several display equations; the default
+% display skips are the single largest source of overfull frames.
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{3.5pt plus 2pt minus 1.5pt}%
+  \setlength{\belowdisplayskip}{3.5pt plus 2pt minus 1.5pt}%
+  \setlength{\abovedisplayshortskip}{1.5pt plus 1pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{2.5pt plus 1pt minus 1pt}%
+  \setlength{\jot}{2pt}%
+}
+
+% Tighter blocks: trim the space around the box, not its inner padding
+\addtobeamertemplate{block begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block end}{}{\vspace{-0.35em}}
+\addtobeamertemplate{block alerted begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block alerted end}{}{\vspace{-0.35em}}
+
+% Tighter lists
+\setlength{\leftmargini}{1.5em}
+\setbeamertemplate{itemize/enumerate body begin}{\vspace{-0.2em}}
+\setbeamertemplate{itemize/enumerate body end}{\vspace{-0.2em}}
+
+% Slightly tighter frame titles
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+
+% Ragged-right table columns; narrow columns look much calmer when
+% they are not hyphenated on nearly every line.
+\newcommand{\NoHyph}{\hyphenpenalty=10000\exhyphenpenalty=10000\relax}
+\newcolumntype{L}[1]{>{\RaggedRight\NoHyph\arraybackslash}p{#1}}
+\newcolumntype{B}[1]{>{\RaggedRight\NoHyph\bfseries\arraybackslash}p{#1}}
+
+% =========================================================
+% Commands
+% =========================================================
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\ATE}{\mathrm{ATE}}
+\newcommand{\ATT}{\mathrm{ATT}}
+
+\newcommand{\Question}{\textcolor{DarkRed}{\textbf{Question}}}
+\newcommand{\Spec}{\textcolor{DeepBlue}{\textbf{Specification \& Estimand}}}
+\newcommand{\Ident}{\textcolor{DarkGreen}{\textbf{Identification}}}
+\newcommand{\Est}{\textcolor{violet}{\textbf{Estimation}}}
+\newcommand{\Infer}{\textcolor{orange!80!black}{\textbf{Inference}}}
+
+% =========================================================
+% Title
+% =========================================================
+\title{Mostly Harmless Econometrics}
+\subtitle{
+\textbf{A Course Correction in the History of Econometrics}
+\\[0.55em]
+Question $\rightarrow$ Specification \& Estimand
+$\rightarrow$ Identification
+$\rightarrow$ Estimation
+$\rightarrow$ Inference
+}
+\author{Kaiwen Luo}
+\institute{Washington University in St.Louis}
+\date{\today}
+
+\begin{document}
+
+% =========================================================
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% =========================================================
+\section{Why Econometrics?}
+
+\begin{frame}{A familiar way to learn econometrics}
+
+Many traditional econometrics courses are organized around estimators:
+\[
+\text{OLS}
+\rightarrow
+\text{GLS}
+\rightarrow
+\text{MLE}
+\rightarrow
+\text{IV/2SLS}
+\rightarrow
+\text{Panel FE}
+\rightarrow
+\text{Discrete Choice}.
+\]
+
+\pause
+
+\vspace{0.3em}
+
+This training is valuable. It teaches us how to solve problems such as
+
+\[
+\min_{\beta}\sum_i (Y_i-X_i'\beta)^2,
+\]
+how to derive
+
+\[
+\sqrt{n}(\hat\beta-\beta_0)
+\overset{d}{\longrightarrow}
+N(0,V),
+\]
+and how to construct standard errors.
+
+\pause
+
+\vspace{0.35em}
+
+\begin{alertblock}{But there is a more fundamental question}
+Before asking how to estimate $\beta$, we should ask:
+\[
+\boxed{\text{Why is } \beta \text{ the object we want in the first place?}}
+\]
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{The econometric workflow}
+\begin{center}
+\large
+\Question
+
+\vspace{0.15em}
+$\Downarrow$
+
+\Spec
+
+\vspace{0.15em}
+$\Downarrow$
+
+\Ident
+
+\vspace{0.15em}
+$\Downarrow$
+
+\Est
+
+\vspace{0.15em}
+$\Downarrow$
+
+\Infer
+\end{center}
+
+\vspace{0.2em}
+
+\begin{block}{The central principle of this course}
+An estimator is not a research design.
+
+A regression equation is not automatically a causal model.
+
+A model that can be estimated is not necessarily a model that answers
+the question we care about.
+\end{block}
+\end{frame}
+
+% =========================================================
+\begin{frame}{What does each step ask?}
+
+\small
+
+\begin{tabular}{B{0.19\textwidth} L{0.72\textwidth}}
+\toprule
+Question
+&
+What economic or causal question are we trying to answer?
+\\[0.5em]
+
+Specification
+&
+What are the units, outcomes, choices, treatments, states,
+constraints, and behavioral relationships?
+\\[0.5em]
+
+Estimand
+&
+What precise population object represents the answer to our question?
+\\[0.5em]
+
+Identification
+&
+Under what assumptions is that object uniquely determined by the
+population distribution of observed data?
+\\[0.5em]
+
+Estimation
+&
+Given a finite sample, how do we construct an estimator of that object?
+\\[0.5em]
+
+Inference
+&
+How uncertain is our estimate because we observe only a finite sample?
+\\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+
+\begin{alertblock}{Do not reverse the order}
+\[
+\boxed{
+\text{``I can estimate this regression''}
+\;\not\Rightarrow\;
+\text{``this regression answers my question.''}
+}
+\]
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Specification and identification are different}
+
+Suppose a model is indexed by a parameter $\theta$ and implies an
+observable-data distribution $P_\theta$.
+
+A classical definition of identification is:
+\[
+P_{\theta_1}=P_{\theta_2}
+\quad\Longrightarrow\quad
+\theta_1=\theta_2.
+\]
+
+\vspace{0.3em}
+
+\pause
+
+\textbf{Specification} comes first:
+\[
+\boxed{
+\text{Which family } \{P_\theta:\theta\in\Theta\}
+\text{ are we willing to consider?}
+}
+\]
+
+\pause
+
+Then \textbf{identification} asks:
+\[
+\boxed{
+\text{Within that model, can different values of }\theta
+\text{ generate the same observable data?}
+}
+\]
+
+\vspace{0.35em}
+
+\begin{alertblock}{Important}
+Identification can be perfect \emph{within a badly chosen model}.
+
+That does not rescue the specification.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Two examples for today}
+
+We will study the same workflow through two very different traditions.
+
+\vspace{0.5em}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+
+\begin{block}{Example 1: Treatment effects}
+\textbf{Question:}
+Does vaccination reduce COVID infection?
+
+\vspace{0.25em}
+
+Language:
+\[
+Y(1),Y(0),\ATE
+\]
+
+Main flavor:
+
+\begin{center}
+\textbf{design-based / reduced-form}
+\end{center}
+
+\end{block}
+
+\column{0.48\textwidth}
+
+\begin{block}{Example 2: Binary choice}
+\textbf{Question:}
+How will consumers respond to a price change?
+
+\vspace{0.25em}
+
+Language:
+\[
+U_{ij},\theta,\varepsilon_{ij}
+\]
+
+Main flavor:
+
+\begin{center}
+\textbf{structural}
+\end{center}
+
+\end{block}
+
+\end{columns}
+
+\vspace{0.4em}
+
+The methods look very different.
+
+\pause
+
+But the discipline of reasoning should be the same.
+
+\end{frame}
+
+% =========================================================
+\section{Example I: ATE and Vaccination}
+
+\begin{frame}{Example I: Start from the question}
+
+Suppose someone asks:
+
+\begin{center}
+\Large
+\textbf{``What is the effect of vaccination on COVID infection?''}
+\end{center}
+
+\vspace{0.5em}
+
+This sounds like a well-defined causal question.
+
+\pause
+
+It is not.
+
+\vspace{0.35em}
+
+We still need to specify:
+\[
+\boxed{
+\begin{array}{c}
+\text{Who?}\\
+\text{Which vaccine?}\\
+\text{Vaccinated when?}\\
+\text{Outcome measured when?}\\
+\text{Infection or severe disease?}\\
+\text{One person's vaccination or a vaccination campaign?}
+\end{array}}
+\]
+
+\vspace{0.25em}
+
+\begin{alertblock}{Lesson}
+Natural-language questions are usually not yet econometric estimands.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{A first specification: individual treatment}
+Let $D_i\in\{0,1\}$ indicate whether individual $i$ is vaccinated, and define
+the potential outcomes
+\[
+Y_i(1) = \text{infection outcome if }i\text{ is vaccinated},
+\]
+\[
+Y_i(0) = \text{infection outcome if }i\text{ is not vaccinated}.
+\]
+Then an apparently natural estimand is
+\[
+\boxed{\ATE = \E[Y_i(1)-Y_i(0)].}
+\]
+Now we have translated a verbal question into a mathematical object.
+\pause
+
+\begin{alertblock}{But have we translated the question correctly?}
+That is a \textbf{specification question}, not an estimation question.
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{What is hidden inside $Y_i(1)$ and $Y_i(0)$?}
+
+Writing $Y_i(d)$ implicitly assumes that once we specify $i$'s
+treatment $d$, the potential outcome is well defined.
+
+A standard version of SUTVA requires, among other things:
+
+\vspace{0.3em}
+
+\begin{enumerate}
+    \item no relevant hidden versions of treatment;
+    \item no interference across units.
+\end{enumerate}
+
+The second condition means:
+\[
+Y_i
+\text{ depends on } D_i,
+\quad
+\text{but not on } D_j
+\text{ for }j\neq i.
+\]
+
+Equivalently,
+\[
+Y_i(\bm D)
+=
+Y_i(D_i).
+\]
+
+\pause
+
+\vspace{0.25em}
+
+\begin{alertblock}{This is not merely technical notation}
+It is an economic and scientific statement about how the world works.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Vaccination exposes the specification problem}
+For an infectious disease, individual $i$'s infection risk can depend on $D_i$,
+and also on the vaccination choices of the people around $i$. For example,
+\[
+Y_i = Y_i(D_i,D_{-i}).
+\]
+Or, using a local vaccination rate $G_i=\frac{1}{|N_i|}\sum_{j\in N_i}D_j$,
+we may instead need
+\[
+\boxed{Y_i(d,g).}
+\]
+If vaccination changes transmission, then
+\[
+Y_i(0,g=0.8) \neq Y_i(0,g=0.2)
+\]
+may be perfectly possible.
+
+\begin{alertblock}{Therefore}
+The simple pair $\{Y_i(1),Y_i(0)\}$ may be too small a model for the
+substantive question.
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{The research question determines the estimand}
+Once interference is allowed, several distinct questions appear.
+
+\textbf{Direct effect at exposure level $g$:}
+\[
+DE(g) = \E[Y_i(1,g)-Y_i(0,g)].
+\]
+\textbf{Spillover effect for an untreated person:}
+\[
+SE(g_1,g_0) = \E[Y_i(0,g_1)-Y_i(0,g_0)].
+\]
+\textbf{Policy effect:}
+\[
+PE(p_1,p_0) = \E[Y_i(\bm D(p_1))-Y_i(\bm D(p_0))],
+\]
+where $p$ indexes a population vaccination policy.
+
+\begin{alertblock}{These are different causal questions}
+There is no unique object called ``the effect of vaccination.''
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{A perfectly executed experiment can answer the wrong question}
+
+Suppose we randomly vaccinate half of the individuals:
+\[
+D_i\perp \{Y_i(1),Y_i(0)\}.
+\]
+
+Under the simple no-interference model,
+\[
+\E[Y_i\mid D_i=1]
+-
+\E[Y_i\mid D_i=0]
+=
+\ATE.
+\]
+
+Excellent identification.
+
+\vspace{0.3em}
+
+\pause
+
+But suppose the policy question is:
+
+\begin{center}
+\textit{What happens when population coverage rises from 20\% to 80\%?}
+\end{center}
+
+Then an individually randomized experiment conducted around 50\% coverage
+need not identify that policy effect.
+
+\vspace{0.4em}
+
+\begin{alertblock}{The deeper lesson}
+\[
+\boxed{
+\text{Strong identification}
++
+\text{wrong estimand}
+=
+\text{a precise answer to the wrong question}.
+}
+\]
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Only now do we discuss identification}
+
+Return temporarily to the simple potential-outcome model:
+\[
+Y_i(1),\qquad Y_i(0).
+\]
+
+Observed outcome:
+\[
+Y_i
+=
+D_iY_i(1)+(1-D_i)Y_i(0).
+\]
+
+We want
+
+\[
+\ATE=\E[Y_i(1)-Y_i(0)].
+\]
+
+But for every individual we observe only one potential outcome.
+
+This is the fundamental missing-data problem:
+\[
+\begin{array}{c|cc}
+ & Y_i(1) & Y_i(0)\\
+\hline
+D_i=1 & \checkmark & ?\\
+D_i=0 & ? & \checkmark
+\end{array}
+\]
+
+Identification asks:
+\[
+\boxed{
+\text{What assumption allows observed outcomes to reconstruct
+the missing counterfactual?}
+}
+\]
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Random assignment is an identification strategy}
+Suppose
+\[
+D_i \perp \left(Y_i(1),Y_i(0)\right).
+\]
+Then
+\[
+\E[Y_i(1)] = \E[Y_i\mid D_i=1],
+\qquad
+\E[Y_i(0)] = \E[Y_i\mid D_i=0],
+\]
+and therefore
+\[
+\boxed{\ATE = \E[Y_i\mid D_i=1]-\E[Y_i\mid D_i=0].}
+\]
+Notice what happened: the causal estimand
+\[
+\underbrace{\E[Y_i(1)-Y_i(0)]}_{\text{causal estimand}}
+\]
+became equal, under an identification assumption, to an observable quantity
+\[
+\underbrace{\E[Y_i\mid D_i=1]-\E[Y_i\mid D_i=0]}_{\text{observable population quantity}}.
+\]
+\end{frame}
+
+% =========================================================
+\begin{frame}{Identification is not estimation}
+Once identification is established,
+\[
+\ATE = \E[Y\mid D=1]-\E[Y\mid D=0],
+\]
+we can estimate it using
+\[
+\boxed{\widehat{\ATE} = \bar Y_1-\bar Y_0.}
+\]
+This is \textbf{estimation}. We can then derive
+\[
+\mathrm{Var}(\widehat{\ATE}) = \frac{\sigma_1^2}{n_1}+\frac{\sigma_0^2}{n_0},
+\]
+and construct a confidence interval. This is \textbf{inference}.
+
+\begin{alertblock}{Three logically different statements}
+\[
+\begin{array}{ll}
+\text{Identification:}
+&
+\ATE = \E[Y\mid D=1]-\E[Y\mid D=0].
+\\[0.25em]
+\text{Estimation:}
+&
+\widehat{\ATE}=\bar Y_1-\bar Y_0.
+\\[0.25em]
+\text{Inference:}
+&
+\widehat{\ATE}\pm 1.96\,SE(\widehat{\ATE}).
+\end{array}
+\]
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{Standard errors do not measure identification uncertainty}
+
+Suppose the estimate is
+
+\[
+\widehat{\ATE}=-0.08,
+\qquad
+SE(\widehat{\ATE})=0.01.
+\]
+
+This tells us that sampling noise is relatively small.
+
+It does \textbf{not} tell us whether
+
+\[
+D_i\perp(Y_i(1),Y_i(0))
+\]
+is credible.
+
+It does not tell us whether SUTVA holds.
+
+It does not tell us whether we selected the correct outcome horizon.
+
+It does not tell us whether the estimand corresponds to the policy question.
+
+\vspace{0.35em}
+
+\begin{block}{Inference is conditional}
+Conventional confidence intervals quantify sampling uncertainty
+\emph{conditional on the maintained model and identification assumptions}.
+\end{block}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Example I: the complete workflow}
+
+\small
+
+\begin{tabular}{B{0.22\textwidth} L{0.68\textwidth}}
+\toprule
+Question
+&
+What aspect of vaccination are we trying to evaluate?
+\\[0.5em]
+
+Specification
+&
+Individual treatment?
+Population coverage?
+Network exposure?
+What outcome and horizon?
+\\[0.5em]
+
+Estimand
+&
+ATE?
+Direct effect?
+Spillover effect?
+Policy effect?
+\\[0.5em]
+
+Identification
+&
+Random assignment?
+No interference?
+Cluster randomization?
+Two-stage saturation design?
+\\[0.5em]
+
+Estimation
+&
+Difference in means?
+Regression adjustment?
+IPW?
+\\[0.5em]
+
+Inference
+&
+Individual-level SE?
+Clustered SE?
+Randomization inference?
+\\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+
+\begin{center}
+\Large
+\boxed{\text{The estimator is near the end of the argument.}}
+\end{center}
+
+\end{frame}
+
+% =========================================================
+\section{Example II: Binary Choice}
+
+\begin{frame}{Example II: A structural question}
+
+Now consider a different research question.
+
+Suppose consumers must choose between products $A$ and $B$.
+
+We want to know:
+
+\begin{center}
+\Large
+\textbf{How would demand change if the price of $A$ fell by \$5?}
+\end{center}
+
+\vspace{0.4em}
+
+Perhaps we also want:
+\[
+\text{consumer surplus},
+\]
+
+\[
+\text{substitution patterns},
+\]
+or responses to a price never observed in the data.
+
+\vspace{0.35em}
+
+These questions naturally invite a model of
+
+\[
+\boxed{\text{how choices are generated}.}
+\]
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{A standard binary-choice specification}
+Suppose utility from the two alternatives is
+\[
+U_{iA} = X_{iA}'\beta-\alpha p_A+\varepsilon_{iA},
+\qquad
+U_{iB} = X_{iB}'\beta-\alpha p_B+\varepsilon_{iB}.
+\]
+Consumer $i$ chooses $A$ if $U_{iA}>U_{iB}$. Define the latent index
+\[
+\Delta U_i = U_{iA}-U_{iB}.
+\]
+Then the observed choice is
+\[
+D_i = \ind\{\Delta U_i>0\}.
+\]
+
+\vspace{0.3em}
+
+This is more than a statistical regression.
+
+It specifies a \textbf{decision rule} connecting primitives to behavior.
+\end{frame}
+
+% =========================================================
+\begin{frame}{From economic structure to an observable probability}
+
+Write
+
+\[
+\Delta U_i
+=
+\Delta X_i'\beta
+-
+\alpha\Delta p_i
++
+\nu_i.
+\]
+
+Then
+
+\[
+\Pp(D_i=1\mid X_i,p_i)
+=
+\Pp
+\left(
+\nu_i
+>
+-\Delta X_i'\beta+\alpha\Delta p_i
+\right).
+\]
+
+If $\nu_i$ has the logistic distribution,
+\[
+\boxed{
+\Pp(D_i=1\mid X_i,p_i)
+=
+\Lambda
+\left(
+\Delta X_i'\beta-\alpha\Delta p_i
+\right).
+}
+\]
+
+If $\nu_i$ is normal, we obtain a probit model.
+
+\vspace{0.4em}
+
+\begin{alertblock}{The distributional assumption has economic content}
+It determines how unobserved utility heterogeneity maps into observed
+choice probabilities.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{A hidden assumption: almost everyone has a strict ranking}
+Under a standard continuous random-utility specification,
+\[
+\Pp(U_{iA}=U_{iB})=0.
+\]
+Almost every consumer strictly prefers one alternative. Thus $D_i=1$ is
+interpreted as evidence that $U_{iA}>U_{iB}$.
+
+\vspace{0.3em}
+
+But suppose the empirical setting is different:
+\begin{center}
+\textbf{A substantial fraction of consumers genuinely regard
+$A$ and $B$ as equally good.}
+\end{center}
+
+Perhaps the products are almost identical.
+
+Perhaps many consumers explicitly report ``no preference.''
+
+Perhaps the observed purchase is determined by a default,
+position on the screen, or random tie-breaking.
+\end{frame}
+
+% =========================================================
+\begin{frame}{The model can fit the data and still misrepresent the question}
+A standard logit can easily generate $\Pp(D_i=A)\approx 0.5$. But it interprets
+this as arising from variation in $\nu_i$, and therefore from consumers with
+different \emph{strict} latent preferences.
+
+That is conceptually different from saying:
+\[
+\boxed{\Pp(U_{iA}=U_{iB})>0.}
+\]
+These models may fit current market shares similarly. But they can imply very
+different predictions for
+\[
+\text{small price changes},
+\qquad
+\text{defaults},
+\qquad
+\text{consumer welfare}.
+\]
+
+\begin{alertblock}{Specification again comes before estimation}
+MLE cannot tell us whether the behavioral model asks the right question.
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{An alternative specification with an indifference region}
+
+Suppose latent relative utility is
+
+\[
+V_i
+=
+\Delta X_i'\beta
+-
+\alpha\Delta p_i
++
+\nu_i.
+\]
+
+Let $\kappa\geq0$ denote an indifference threshold.
+
+Define the latent preference state
+
+\[
+S_i=
+\begin{cases}
+A, & V_i>\kappa,\\[0.3em]
+I, & |V_i|\leq\kappa,\\[0.3em]
+B, & V_i<-\kappa.
+\end{cases}
+\]
+
+Now there are three economically distinct states:
+\[
+\boxed{
+\text{prefer }A,
+\qquad
+\text{indifferent},
+\qquad
+\text{prefer }B.
+}
+\]
+
+If the consumer is forced to make a binary purchase, we still need a
+\textbf{tie-breaking rule} for state $I$.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Observed binary choice now contains two mechanisms}
+
+Suppose an indifferent consumer chooses $A$ with probability $r_i$.
+
+Then
+
+\[
+\Pp(D_i=A\mid X_i)
+=
+\Pp(V_i>\kappa\mid X_i)
++
+r_i
+\Pp(|V_i|\leq\kappa\mid X_i).
+\]
+
+Observed demand therefore reflects:
+\[
+\boxed{
+\text{preference}
++
+\text{indifference}
++
+\text{tie-breaking}.
+}
+\]
+
+\vspace{0.35em}
+
+If the true world has all three mechanisms but we estimate a standard
+binary logit, we may attribute all observed behavior to preference.
+
+\vspace{0.35em}
+
+That changes the interpretation of $\alpha$ and $\beta$,
+and potentially the predicted response to policy.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Identification now becomes a serious question}
+Suppose all we observe for each consumer is $(D_i,X_i,p_i)$.
+Can we separately identify
+\[
+\beta,\qquad \alpha,\qquad \kappa,\qquad r?
+\]
+Not necessarily. Different combinations of
+\[
+\text{preference heterogeneity},
+\quad
+\text{indifference},
+\quad
+\text{tie-breaking}
+\]
+may generate the same observed binary choice probabilities.
+
+Additional information may be useful:
+\[
+\begin{array}{ll}
+\text{randomized prices},
+&
+\text{repeated choices},
+\\[0.2em]
+\text{randomized defaults},
+&
+\text{an explicit ``indifferent'' option},
+\\[0.2em]
+\multicolumn{2}{c}{\text{additional moments or exclusion restrictions}.}
+\end{array}
+\]
+\end{frame}
+
+% =========================================================
+\begin{frame}{Identification is not ``the optimizer converged''}
+Suppose we write a likelihood
+\[
+L(\theta) = \prod_{i=1}^{n} P_\theta(D_i\mid X_i),
+\]
+and obtain $\hat\theta=\arg\max_{\theta}L(\theta)$. The computer reports:
+\begin{center}
+\texttt{Convergence achieved.}
+\end{center}
+\pause
+That tells us nothing by itself about identification.
+Identification is a population property:
+\[
+P_{\theta_1}(D\mid X) = P_{\theta_2}(D\mid X)
+\quad\Longrightarrow\quad
+\theta_1=\theta_2?
+\]
+
+\begin{alertblock}{Optimization and identification are different problems}
+A unique numerical optimum in one sample does not prove that the
+economic primitives are identified.
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{Why estimate a structural binary-choice model?}
+If the primitives are credibly specified and identified, we can ask
+counterfactual questions. For example, under a new price $p_A'=p_A-5$,
+we can construct
+\[
+\Pp_{\hat\theta}\left(D_i(p_A')=A\right).
+\]
+More generally, a structural model may allow us to study
+\[
+\boxed{\text{policies not directly observed in the historical data}.}
+\]
+Potential outputs include
+\[
+\text{counterfactual demand},
+\qquad
+\text{consumer surplus},
+\qquad
+\text{substitution patterns},
+\]
+and equilibrium outcomes.
+
+\vspace{0.25em}
+
+The payoff is greater extrapolation.
+The cost is stronger modeling assumptions.
+\end{frame}
+
+% =========================================================
+\begin{frame}{Example II: the complete workflow}
+
+\small
+
+\begin{tabular}{B{0.22\textwidth} L{0.68\textwidth}}
+\toprule
+Question
+&
+How would demand and welfare respond to a price policy?
+\\[0.5em]
+
+Specification
+&
+Utility functions, alternatives, information,
+choice rule, indifference, tie-breaking.
+\\[0.5em]
+
+Estimand
+&
+Price coefficient?
+Preference distribution?
+Elasticity?
+Counterfactual market share?
+Welfare?
+\\[0.5em]
+
+Identification
+&
+What variation separates price sensitivity,
+heterogeneity, indifference, and tie-breaking?
+\\[0.5em]
+
+Estimation
+&
+MLE?
+GMM?
+Simulated moments?
+Bayesian methods?
+\\[0.5em]
+
+Inference
+&
+Standard errors?
+Bootstrap?
+Confidence sets for counterfactuals?
+\\
+\bottomrule
+\end{tabular}
+
+\vspace{0.35em}
+
+\begin{center}
+\boxed{
+\text{A structural model does not escape the same five-step discipline.}
+}
+\end{center}
+
+\end{frame}
+
+% =========================================================
+\section{What Is a Reduced Form?}
+
+\begin{frame}{Why ``reduced form'' causes so much confusion}
+
+In modern applied economics, people say things like
+
+\begin{center}
+``This is a reduced-form paper.''
+\end{center}
+
+or
+
+\begin{center}
+``We first show the reduced-form effect.''
+\end{center}
+
+But the term has an older and much more precise econometric meaning.
+
+\vspace{0.4em}
+
+\begin{alertblock}{Important distinction}
+We should distinguish
+
+\[
+\boxed{\text{reduced form as a mathematical object}}
+\]
+from
+
+\[
+\boxed{\text{``reduced-form empirical work'' as a research style}.}
+\]
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{The strict econometric definition}
+Consider a simultaneous structural system
+\[
+A_0Y_i = A_1X_i + U_i,
+\]
+where $Y_i$ collects the endogenous variables and $X_i$ the exogenous
+variables. If $A_0$ is invertible,
+\[
+Y_i = A_0^{-1}A_1X_i + A_0^{-1}U_i.
+\]
+Define $\Pi=A_0^{-1}A_1$ and $V_i=A_0^{-1}U_i$. Then
+\[
+\boxed{Y_i=\Pi X_i+V_i}
+\]
+is the \textbf{reduced form}.
+
+\vspace{0.25em}
+
+Every endogenous variable is expressed as a function of
+exogenous variables and disturbances.
+\end{frame}
+
+% =========================================================
+\begin{frame}{Example: demand and supply}
+
+Consider
+
+\[
+Q^d
+=
+\alpha_0
+-
+\alpha_1P
++
+\alpha_2Z_d
++
+u_d,
+\]
+
+\[
+Q^s
+=
+\beta_0
++
+\beta_1P
++
+\beta_2Z_s
++
+u_s.
+\]
+
+Equilibrium requires
+
+\[
+Q^d=Q^s=Q.
+\]
+
+The two equations are \textbf{structural}:
+\[
+\boxed{
+\text{one describes demand behavior,
+the other supply behavior.}
+}
+\]
+
+Price $P$ and quantity $Q$ are jointly determined endogenous variables.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Solving the structural system produces the reduced form}
+
+Set demand equal to supply:
+\[
+\alpha_0-\alpha_1P+\alpha_2Z_d+u_d
+=
+\beta_0+\beta_1P+\beta_2Z_s+u_s.
+\]
+
+Therefore,
+\[
+P
+=
+\frac{
+\alpha_0-\beta_0
++\alpha_2Z_d-\beta_2Z_s
++u_d-u_s
+}{
+\alpha_1+\beta_1
+}.
+\]
+
+Hence
+
+\[
+\boxed{
+P
+=
+\pi_0
++
+\pi_d Z_d
++
+\pi_s Z_s
++
+v_P.
+}
+\]
+
+Substituting this expression into either structural equation gives
+
+\[
+\boxed{
+Q
+=
+\gamma_0
++
+\gamma_d Z_d
++
+\gamma_s Z_s
++
+v_Q.
+}
+\]
+
+These equations are the reduced form.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Structural and reduced-form parameters are different objects}
+
+For example,
+\[
+\pi_d
+=
+\frac{\alpha_2}{\alpha_1+\beta_1}.
+\]
+
+Thus a reduced-form coefficient generally combines several structural
+parameters.
+
+\vspace{0.35em}
+
+Observing $\pi_d$ does not automatically tell us $\alpha_1$,
+the slope of demand.
+
+To recover structural parameters we need additional restrictions,
+variation, or instruments.
+
+\vspace{0.4em}
+
+\begin{block}{This is the classical identification problem}
+\[
+\boxed{
+\text{Can the structural parameters be recovered from
+the reduced-form distribution?}
+}
+\]
+\end{block}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{The word ``reduced form'' in modern applied micro}
+
+Modern applied researchers often use the term more broadly.
+
+Suppose $Z_i$ is experimentally or quasi-experimentally assigned.
+
+They may estimate
+
+\[
+Y_i
+=
+\alpha
++
+\rho Z_i
++
+\varepsilon_i
+\]
+and call $\hat\rho$ a \textbf{reduced-form effect}.
+
+Why?
+
+Because the researcher is estimating the response of an observed outcome
+to plausibly exogenous variation without fully modeling the behavioral
+mechanism connecting $Z$ to $Y$.
+
+\vspace{0.35em}
+
+\begin{alertblock}{But this is a convention, not the general mathematical definition}
+OLS is not synonymous with reduced form.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{IV makes the terminology especially transparent}
+
+Suppose encouragement $Z_i$ affects treatment $D_i$.
+
+The first stage is
+
+\[
+D_i
+=
+\pi_0+\pi_1Z_i+v_i.
+\]
+
+The outcome reduced form is
+
+\[
+Y_i
+=
+\rho_0+\rho_1Z_i+e_i.
+\]
+
+The Wald estimand is
+
+\[
+\frac{\rho_1}{\pi_1}.
+\]
+
+Under the appropriate IV assumptions, this may identify a LATE.
+
+\vspace{0.35em}
+
+Here ``reduced form'' is close to the classical meaning:
+\[
+\boxed{
+\text{an endogenous outcome is written directly as a function
+of exogenous variation}.
+}
+\]
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Four common misconceptions}
+
+\begin{enumerate}
+    \item
+    \textbf{``OLS means reduced form.''}
+
+    False. OLS is an estimation method.
+
+    \vspace{0.2em}
+
+    \item
+    \textbf{``Logit means structural.''}
+
+    False. Logit is a probability model.
+    It becomes structural only when its objects have a behavioral
+    interpretation within an economic model.
+
+    \vspace{0.2em}
+
+    \item
+    \textbf{``Structural models must be nonlinear or complicated.''}
+
+    False. A structural relationship can be linear.
+
+    \vspace{0.2em}
+
+    \item
+    \textbf{``Reduced form means atheoretical.''}
+
+    False. A credible reduced-form design requires theory about
+    assignment, counterfactuals, institutions, and the estimand.
+\end{enumerate}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{So how do we tell them apart in practice?}
+
+The misconceptions share one lesson: the econometric \emph{tool}
+does not settle the classification.
+
+\vspace{0.3em}
+
+\begin{alertblock}{First, accept a premise}
+This is not a binary classification. It is a \textbf{spectrum},
+and many of the best papers sit somewhere in the middle.
+\end{alertblock}
+
+\[
+\text{design-based}
+\;\xleftrightarrow[\text{many good papers live in between}]{\hspace{6cm}}\;
+\text{fully structural}
+\]
+
+The useful question is not ``which estimator?'' but
+\[
+\boxed{\text{What role does the economic model play in the paper?}}
+\]
+
+Four diagnostic questions:
+\begin{enumerate}
+    \item Where does the estimating equation come from?
+    \item What is the target parameter?
+    \item What does identification rely on?
+    \item What are the estimates used for?
+\end{enumerate}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Q1: Where does the estimating equation come from?}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+\begin{block}{Reduced form}
+Dictated mainly by the \textbf{identification strategy}:
+the DiD double difference, the comparison around an RD cutoff.
+
+\vspace{0.2em}
+
+There may be a ``theoretical framework'' section for intuition.
+Delete it, and the regression still runs and the result can still
+be interpreted.
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Structural}
+Derived from an \textbf{explicit economic model}:
+objectives, constraints, information, equilibrium conditions.
+
+\vspace{0.2em}
+
+The estimating equations are its first-order conditions,
+likelihood, or moment conditions.
+\end{block}
+
+\end{columns}
+
+\vspace{0.5em}
+
+\begin{alertblock}{A useful test: take the model away}
+Do the estimates still mean anything?
+\begin{itemize}
+    \item Yes $\Rightarrow$ the paper leans reduced form.
+    \item The parameters cannot even be defined without the model
+    $\Rightarrow$ structural.
+\end{itemize}
+\end{alertblock}
+
+In our examples: $\bar Y_1-\bar Y_0$ survives the test;
+$\alpha$ as a ``marginal utility of money'' does not.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Q2: What is the target parameter?}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+\begin{block}{Reduced form}
+Treatment effects, elasticities:
+``in \emph{this} setting, when $X$ changes, how does $Y$ change?''
+
+\vspace{0.2em}
+
+A composite of many primitives \emph{and} the environment.
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Structural}
+\textbf{Primitives}: preferences, technology, costs,
+discount rates, risk aversion, beliefs.
+
+\vspace{0.2em}
+
+In principle, \emph{invariant to the policy} being evaluated.
+\end{block}
+
+\end{columns}
+
+\vspace{0.5em}
+
+Recall the demand--supply example:
+\[
+\pi_d=\frac{\alpha_2}{\alpha_1+\beta_1},
+\qquad
+\begin{array}{l}
+\alpha_1,\alpha_2:\ \text{demand primitives},\\
+\beta_1:\ \text{supply primitive}.
+\end{array}
+\]
+$\pi_d$ is a legitimate causal effect of $Z_d$ on $P$ \emph{in this market}.
+A policy that changes the supply slope $\beta_1$ changes $\pi_d$,
+but leaves $\alpha_1,\alpha_2$ untouched.
+
+\vspace{0.3em}
+
+\begin{alertblock}{Why this matters}
+Reduced-form effects describe this environment;
+primitives can be carried to a new one.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Q3: What does identification rely on?}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+\begin{block}{Reduced form}
+Mainly the \textbf{research design}:
+exogenous variation in the data
+(randomization, discontinuities, timing of reforms).
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Structural}
+To a large extent the \textbf{model itself}:
+functional forms, distributional assumptions,
+equilibrium conditions, exclusion restrictions.
+\end{block}
+
+\end{columns}
+
+\vspace{0.5em}
+
+\textbf{Caveat.} Good structural papers \emph{also} use quasi-experimental
+variation. So the question is not ``design or model?'' but
+\[
+\boxed{\text{How much of the identification burden does the model carry?}}
+\]
+
+\vspace{0.2em}
+
+In our examples:
+\begin{itemize}
+    \item Example I: randomization does essentially all the work.
+    \item Example II: with only $(D_i,X_i,p_i)$, separating
+    $\alpha,\beta,\kappa,r$ leans heavily on the model,
+    unless we add randomized prices, randomized defaults,
+    or an explicit ``indifferent'' option.
+\end{itemize}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Q4: What are the estimates used for?}
+
+This is often the most visible signal: look at where the paper \emph{ends}.
+
+\vspace{0.3em}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+\begin{block}{Reduced form}
+The endpoint is the \textbf{effect itself}:
+report it and interpret it.
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Structural}
+The endpoint is \textbf{counterfactual simulation}:
+\begin{itemize}
+    \item policies never observed in the data;
+    \item welfare analysis;
+    \item decomposing mechanisms.
+\end{itemize}
+\end{block}
+
+\end{columns}
+
+\vspace{0.5em}
+
+In Example II the payoff was
+\[
+\Pp_{\hat\theta}\bigl(D_i(p_A')=A\bigr),
+\qquad
+p_A'=p_A-5,
+\]
+a price that may never appear in the data.
+
+\vspace{0.3em}
+
+\begin{alertblock}{Use the four questions together}
+Ask all four about any paper and you can place it on the spectrum,
+whatever estimator it happens to use.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Summary: the two ends of the spectrum}
+
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+
+\begin{tabular}{L{0.20\textwidth} L{0.37\textwidth} L{0.37\textwidth}}
+\toprule
+&
+\textbf{Reduced-form / design-based}
+&
+\textbf{Structural}
+\\
+\midrule
+
+Estimating equation
+&
+Dictated by the research design
+&
+Derived from an explicit economic model
+\\[0.4em]
+
+Target parameter
+&
+Treatment effects, elasticities in this setting
+&
+Primitives: preferences, technology, costs, beliefs
+\\[0.4em]
+
+Identification
+&
+Mainly exogenous variation in the data
+&
+Model structure + identifying variation
+\\[0.4em]
+
+End use
+&
+Report and interpret the effect
+&
+Counterfactuals, welfare, mechanisms
+\\[0.4em]
+
+Strength
+&
+Transparent connection between variation and estimand
+&
+Mechanisms and richer counterfactuals
+\\[0.4em]
+
+Main risk
+&
+External validity / limited counterfactual scope
+&
+Misspecification / stronger extrapolation assumptions
+\\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+
+\begin{center}
+Real papers mix the two columns. The question is \emph{how much work the model does}.
+\end{center}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Same empirical setting, different questions}
+
+Suppose a city randomly offers a \$5 public-transit subsidy.
+
+\textbf{Reduced-form question:} the effect
+\[
+\E[Y_i(1)-Y_i(0)],
+\]
+where treatment means receiving the subsidy offer. We might ask:
+\[
+\boxed{
+\text{How much did ridership change because of this program?}
+}
+\]
+
+\vspace{0.25em}
+
+\textbf{Structural question:} estimate preferences over travel time, money,
+comfort, and modes. Then ask:
+\[
+\boxed{
+\begin{array}{c}
+\text{What would happen under a \$2, \$10, or nonlinear subsidy,}\\
+\text{or after adding a new transit mode?}
+\end{array}
+}
+\]
+
+Same market. Different estimands. Different assumptions.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Reduced form versus structural is not a contest}
+
+It is tempting to ask:
+
+\begin{center}
+\Large
+\textbf{Which approach is better?}
+\end{center}
+
+That is usually the wrong question.
+
+\vspace{0.4em}
+
+The correct question is:
+\[
+\boxed{
+\text{What do we want to learn,
+and what assumptions are required to learn it?}
+}
+\]
+
+\vspace{0.4em}
+
+Structural work can use randomized experiments.
+
+Reduced-form evidence can discipline structural models.
+
+Experimental moments can identify structural parameters.
+
+Structural models can clarify what a reduced-form coefficient means.
+
+\vspace{0.35em}
+
+\begin{block}{Modern empirical work increasingly combines the two}
+The boundary is methodological, not ideological.
+\end{block}
+
+\end{frame}
+
+% =========================================================
+\section{Fixed Design or Random Design?}
+
+\begin{frame}{Two stories about the same regression}
+
+Every course writes down the same equation:
+\[
+Y_i = X_i'\beta+\varepsilon_i.
+\]
+
+But different courses tell different stories about \emph{where the randomness comes from}.
+
+\vspace{0.3em}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+\begin{block}{Story 1: fixed design}
+``$X$ is fixed in repeated samples.''
+\[
+Y_i=x_i'\beta+\varepsilon_i,
+\qquad
+x_i\ \text{nonrandom}.
+\]
+Only $\varepsilon_i$ is random.
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Story 2: random design}
+``$(Y_i,X_i)$ is an i.i.d.\ draw from a population.''
+\[
+(Y_i,X_i)\sim F,
+\qquad
+X_i\ \text{random}.
+\]
+Both are random.
+\end{block}
+
+\end{columns}
+
+\vspace{0.3em}
+
+\begin{alertblock}{And yet nearly every formula carries a $\mid X$}
+\[
+\E[\hat\beta\mid \bm X],
+\qquad
+\mathrm{Var}(\hat\beta\mid \bm X),
+\qquad
+\E[\varepsilon_i\mid X_i]=0.
+\]
+Why do we condition on something we just called fixed?
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Fixed design: the experimenter chooses $X$}
+
+The fixed-design convention was inherited from experimental statistics.
+
+In an agricultural field trial the researcher \emph{chooses} the fertilizer doses
+\[
+x_1,\dots,x_n,
+\]
+assigns them to plots, and observes yields. Here ``repeated samples'' is literal:
+run the experiment again \emph{at the same $X$}.
+
+\vspace{0.3em}
+
+Then there is nothing to condition on, and the classical results are exact:
+\[
+\E[\hat\beta]=\beta,
+\qquad
+\mathrm{Var}(\hat\beta)=\sigma^2(\bm X'\bm X)^{-1}.
+\]
+
+This is the world in which the Gauss--Markov theorem is usually stated.
+
+\vspace{0.35em}
+
+\pause
+
+\begin{alertblock}{The difficulty for economists}
+We almost never choose $X$.
+
+Nobody assigns years of schooling, firm size, or a country's institutions.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Random design: what actually changes}
+
+Under random sampling, ``another sample'' means \textbf{drawing new units},
+whose regressor values would themselves be different.
+
+So
+\[
+\bm X'\bm X,
+\qquad
+(\bm X'\bm X)^{-1},
+\qquad
+\hat\beta
+\]
+are all random, and in general
+\[
+\boxed{
+\E\left[(\bm X'\bm X)^{-1}\right]
+\;\neq\;
+\left(\E[\bm X'\bm X]\right)^{-1}.
+}
+\]
+
+\vspace{0.25em}
+
+Two questions now come apart:
+\[
+\begin{array}{ll}
+\text{Conditional:}
+&
+\text{how would }\hat\beta\text{ vary across samples with \emph{this} }\bm X?
+\\[0.3em]
+\text{Unconditional:}
+&
+\text{how would }\hat\beta\text{ vary across samples with a \emph{new} }\bm X?
+\end{array}
+\]
+
+\begin{alertblock}{These are different reference sets}
+They are two different thought experiments, and they have two different answers.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Conditioning on $X$ restores the fixed-design algebra}
+
+Write
+\[
+\hat\beta = \beta + (\bm X'\bm X)^{-1}\bm X'\varepsilon.
+\]
+
+Conditional on $\bm X$ this is linear in $\varepsilon$, exactly as in the fixed design.
+So if
+\[
+\E[\varepsilon\mid \bm X]=0,
+\]
+then
+\[
+\E[\hat\beta\mid \bm X]=\beta,
+\qquad
+\mathrm{Var}(\hat\beta\mid \bm X)=\sigma^2(\bm X'\bm X)^{-1}
+\quad\text{under }\E[\varepsilon\varepsilon'\mid \bm X]=\sigma^2 I,
+\]
+and by the law of iterated expectations,
+\[
+\E[\hat\beta]=\E\big[\E[\hat\beta\mid \bm X]\big]=\beta.
+\]
+
+\vspace{0.3em}
+
+\begin{alertblock}{How to read the textbook sentence}
+``Treat $X$ as fixed'' is an instruction to \textbf{condition on} $X$.
+
+It is not a claim that $X$ is physically nonrandom.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Is conditioning on $X$ legitimate?}
+
+Under random sampling the joint density factors:
+\[
+f(y_i,x_i;\beta,\gamma)
+=
+\underbrace{f(y_i\mid x_i;\beta)}_{\text{contains }\beta}
+\cdot
+\underbrace{f(x_i;\gamma)}_{\text{does not}}.
+\]
+
+If $\beta$ and $\gamma$ are variation free, the marginal distribution of $X$ carries
+no information about $\beta$: $X$ is \textbf{ancillary}. The conditionality principle
+then says inference about $\beta$ should be carried out in the conditional model,
+i.e.\ treating the realized $\bm X$ as the reference set.
+
+\vspace{0.3em}
+
+\begin{block}{When this argument fails}
+\begin{itemize}
+    \item $X$ is determined jointly with $Y$ (simultaneity): then $f(x)$ depends on $\beta$.
+    \item Sampling depends on $Y$ (choice-based or endogenous stratified sampling).
+    \item The target population differs from the sampled one, so the estimand averages
+    over a \emph{different} distribution of $X$.
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+% =========================================================
+% [Commented out for Session 1: Examples A--D (exogeneity, LDV, variance, design-based). Uncomment to restore.]
+% \begin{frame}{Example A: two exogeneity conditions}
+% 
+% Under a fixed design there is only one sensible condition, $\E[\varepsilon_i]=0$.
+% Under a random design, two distinct conditions appear:
+% \[
+% \begin{array}{ll}
+% \text{(i) Orthogonality:}
+% &
+% \E[X_i\varepsilon_i]=0,
+% \\[0.3em]
+% \text{(ii) Conditional mean:}
+% &
+% \E[\varepsilon_i\mid X_i]=0.
+% \end{array}
+% \]
+% 
+% \pause
+% 
+% Condition (i) holds \textbf{by construction} for the best linear predictor: it is the
+% first-order condition of $\min_b\E[(Y_i-X_i'b)^2]$. It buys consistency for the
+% linear projection coefficient, and nothing more.
+% 
+% \vspace{0.25em}
+% 
+% Condition (ii) is a genuine restriction. It says
+% \[
+% \boxed{\E[Y_i\mid X_i]=X_i'\beta,}
+% \]
+% i.e.\ the CEF is linear. It buys conditional unbiasedness and the interpretation of
+% $\beta$ as a feature of the conditional expectation function.
+% 
+% \vspace{0.3em}
+% 
+% \begin{alertblock}{Where the interesting econometrics lives}
+% Almost every identification argument in this course is an argument about (ii),
+% not (i). The fixed-design story hides the distinction completely.
+% \end{alertblock}
+% 
+% \end{frame}
+% 
+% % =========================================================
+% \begin{frame}{Example B: strict exogeneity and the lagged dependent variable}
+% 
+% With i.i.d.\ sampling, $\E[\varepsilon_i\mid X_i]=0$ plus independence across units
+% delivers the stronger condition
+% \[
+% \E[\varepsilon_i\mid \bm X]=0
+% \qquad(\textbf{strict exogeneity}),
+% \]
+% which is what conditional unbiasedness actually requires. With dependent data it
+% does not. Consider
+% \[
+% Y_t=\rho Y_{t-1}+\varepsilon_t,
+% \qquad
+% \E[\varepsilon_t\mid Y_{t-1}]=0.
+% \]
+% 
+% Here $\varepsilon_t$ is uncorrelated with the \emph{current} regressor, but it is
+% correlated with \emph{future} regressors $Y_t,Y_{t+1},\dots$, which are also rows of
+% $\bm X$. Hence
+% \[
+% \E[\varepsilon_t\mid \bm X]\neq0,
+% \qquad
+% \E[\hat\rho\mid \bm X]\neq\rho,
+% \qquad
+% \E[\hat\rho]\neq\rho.
+% \]
+% 
+% \begin{alertblock}{A familiar slogan, finally explained}
+% ``OLS with a lagged dependent variable is biased but consistent.''
+% 
+% The bias is a failure of the \emph{conditioning} story, not of orthogonality.
+% The same mechanism produces Nickell bias in fixed-effects panels.
+% \end{alertblock}
+% 
+% \end{frame}
+% 
+% % =========================================================
+% \begin{frame}{Example C: the variance formula}
+% 
+% \textbf{What survives.} Under $\E[\varepsilon\mid \bm X]=0$ and conditional
+% homoskedasticity,
+% \[
+% \E\left[s^2(\bm X'\bm X)^{-1}\right]
+% =
+% \E\left[\mathrm{Var}(\hat\beta\mid \bm X)\right]
+% =
+% \mathrm{Var}(\hat\beta).
+% \]
+% The textbook standard error is unbiased for the conditional \emph{and} the
+% unconditional variance. Conditioning by itself is not the problem.
+% 
+% \pause
+% 
+% \vspace{0.25em}
+% 
+% \textbf{What does not.}
+% \begin{enumerate}
+%     \item The shortcut $\mathrm{Var}(\hat\beta)=\sigma^2(\E[\bm X'\bm X])^{-1}$.
+%     The correct object is $\E[\sigma^2(\bm X'\bm X)^{-1}]$.
+% 
+%     \item Conditional homoskedasticity itself. If the regression is only the best
+%     \emph{linear approximation} to a nonlinear CEF, then $\mathrm{Var}(\varepsilon_i\mid X_i)$
+%     varies with $X_i$ almost mechanically, and we need
+%     \[
+%     \mathrm{Var}(\hat\beta\mid \bm X)
+%     =
+%     (\bm X'\bm X)^{-1}
+%     \Big(\textstyle\sum_i X_iX_i'\sigma_i^2\Big)
+%     (\bm X'\bm X)^{-1}.
+%     \]
+% \end{enumerate}
+% 
+% \begin{alertblock}{Robust standard errors are a default, not a robustness check}
+% Heteroskedasticity is the generic case once $X$ is random and the linear model is
+% an approximation.
+% \end{alertblock}
+% 
+% \end{frame}
+% 
+% % =========================================================
+% \begin{frame}{Example D: a third meaning of ``fixed''}
+% 
+% In a randomized experiment on a given set of $n$ units, a natural model treats
+% \[
+% \{Y_i(1),Y_i(0),X_i\}_{i=1}^n
+% \quad\text{as \textbf{fixed}},
+% \]
+% and the assignment vector $\bm D$ as the only random object. ``Repeated samples''
+% now means \emph{re-randomization}, not resampling.
+% 
+% \vspace{0.3em}
+% 
+% So there are three different repeated experiments:
+% \[
+% \begin{array}{ll}
+% \text{classical fixed design:}
+% &
+% \text{redraw }\varepsilon\text{ at the same }X,
+% \\[0.25em]
+% \text{random design / sampling:}
+% &
+% \text{redraw }(Y_i,X_i)\text{ from a population},
+% \\[0.25em]
+% \text{design-based:}
+% &
+% \text{re-randomize }\bm D\text{ on the same units}.
+% \end{array}
+% \]
+% 
+% \begin{alertblock}{They are not the same standard error}
+% Neyman's randomization variance for the \emph{sample} average treatment effect is a
+% different object from the sampling variance of a super-population estimand. The
+% robust (EHW) variance is generally conservative for design-based uncertainty.
+% \end{alertblock}
+% 
+% \end{frame}
+
+% =========================================================
+% [Commented out for Session 1: sample vs. population estimand. Uncomment to restore.]
+% \begin{frame}{Conditioning on $X$ is part of the estimand}
+% 
+% Let $\tau(x)=\E[Y_i(1)-Y_i(0)\mid X_i=x]$. Two different targets:
+% \[
+% \boxed{
+% \tau_{\text{sample}}
+% =
+% \frac1n\sum_{i=1}^n\tau(X_i)
+% }
+% \qquad\text{versus}\qquad
+% \boxed{
+% \tau_{\text{pop}}
+% =
+% \E[\tau(X_i)].
+% }
+% \]
+% 
+% The first averages over the covariate distribution we actually drew;
+% the second over the population covariate distribution.
+% 
+% \vspace{0.25em}
+% 
+% Often the same estimator targets both and the point estimates coincide. But
+% \[
+% \mathrm{Var}\left(\hat\tau-\tau_{\text{sample}}\right)
+% \;\leq\;
+% \mathrm{Var}\left(\hat\tau-\tau_{\text{pop}}\right),
+% \]
+% because the second also pays for the fact that a new sample would have a
+% different $\bm X$.
+% 
+% \vspace{0.3em}
+% 
+% \begin{alertblock}{The point of this section}
+% \[
+% \boxed{
+% \text{``Do we condition on } X\text{?'' is a specification question,
+% not a standard-error option.}
+% }
+% \]
+% It changes what we claim to have learned, not only how precisely we learned it.
+% \end{alertblock}
+% 
+% \end{frame}
+
+% =========================================================
+\begin{frame}{A historical note}
+
+The fixed-design convention entered econometrics from experimental statistics,
+where the researcher really does choose $X$. Economists inherited the algebra
+without inheriting the experiment.
+
+\vspace{0.3em}
+
+For a long time ``$X$ is fixed in repeated samples'' was taught as an assumption
+about the world. It is better understood as a choice of reference set:
+\[
+\boxed{\text{which repeated experiment are we imagining?}}
+\]
+
+\vspace{0.3em}
+
+Modern treatments restate the linear model under random sampling, derive results
+conditionally and then unconditionally, and make heteroskedasticity-robust
+inference the default. The design-based literature adds a third reference set:
+randomization itself.
+
+\vspace{0.35em}
+
+\begin{block}{Back to the workflow}
+``Where does the randomness come from?'' belongs to \Spec,
+
+long before anyone types \texttt{reg y x, robust}.
+\end{block}
+
+\end{frame}
+
+% =========================================================
+\section{Putting the Framework Together}
+
+\begin{frame}{The same five questions apply to both traditions}
+
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.1}
+
+\begin{tabular}{L{0.18\textwidth} L{0.38\textwidth} L{0.38\textwidth}}
+\toprule
+&
+\textbf{Treatment-effect example}
+&
+\textbf{Binary-choice example}
+\\
+\midrule
+
+Question
+&
+Does vaccination change infection risk?
+&
+How does price affect choice and welfare?
+\\[0.5em]
+
+Specification
+&
+Potential outcomes, treatment, interference, horizon
+&
+Utility, information, choice set, tie-breaking
+\\[0.5em]
+
+Estimand
+&
+ATE, direct effect, spillover, policy effect
+&
+Preferences, elasticity, welfare, counterfactual share
+\\[0.5em]
+
+Identification
+&
+Randomization / conditional independence / design
+&
+Exclusion restrictions, price variation, functional restrictions
+\\[0.5em]
+
+Estimation
+&
+Difference in means, regression, weighting
+&
+MLE, GMM, simulated moments
+\\[0.5em]
+
+Inference
+&
+SEs, clustering, randomization inference
+&
+Asymptotic SEs, bootstrap, counterfactual uncertainty
+\\
+\bottomrule
+\end{tabular}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Two different ways a project can fail}
+
+\begin{columns}[T]
+
+\column{0.48\textwidth}
+
+\begin{block}{Failure 1: Wrong identification}
+The estimand is meaningful, but the data do not identify it.
+
+For example, $\ATE$ is the right question, but treatment selection
+is endogenous.
+
+\vspace{0.35em}
+
+Problem:
+\[
+\boxed{\text{counterfactual is not identified}}
+\]
+
+\end{block}
+
+\column{0.48\textwidth}
+
+\begin{block}{Failure 2: Wrong specification}
+The parameter is perfectly identified, but it is not the object
+corresponding to the substantive question.
+
+For example, estimate $\E[Y(1)-Y(0)]$ when the policy operates
+through network spillovers.
+
+\vspace{0.35em}
+
+Problem:
+\[
+\boxed{\text{we precisely answer the wrong question}}
+\]
+
+\end{block}
+
+\end{columns}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{A useful hierarchy of econometric questions}
+
+When reading a paper, do not begin with:
+
+\begin{center}
+``What regression did they run?''
+\end{center}
+
+Instead ask:
+
+\vspace{0.25em}
+
+\begin{enumerate}
+    \item What is the substantive question?
+    \item What mathematical object represents the answer?
+    \item What assumptions make that object meaningful?
+    \item What assumptions connect it to observed data?
+    \item What variation actually identifies it?
+    \item What estimator implements that identification argument?
+    \item What uncertainty does the reported standard error capture?
+    \item What important uncertainty does it \emph{not} capture?
+\end{enumerate}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{When you see a regression, ask what role it plays}
+Consider
+\[
+Y_i = \alpha+\beta D_i+X_i'\gamma+\varepsilon_i.
+\]
+The same equation can play very different roles. It might be
+\[
+\begin{array}{c}
+\boxed{\text{a descriptive conditional expectation}},\\[0.3em]
+\boxed{\text{an estimator implementing a randomized experiment}},\\[0.3em]
+\boxed{\text{a selection-on-observables identification strategy}},\\[0.3em]
+\boxed{\text{one equation inside a structural model}}.
+\end{array}
+\]
+
+\begin{alertblock}{The syntax of the regression does not reveal its scientific meaning}
+The meaning comes from the specification and identification argument.
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\begin{frame}{The regression coefficient is not the starting point}
+
+A common workflow is:
+\[
+\text{write regression}
+\rightarrow
+\text{estimate }\beta
+\rightarrow
+\text{interpret }\beta.
+\]
+
+A better workflow is:
+\[
+\boxed{
+\text{Question}
+\rightarrow
+\text{Estimand}
+\rightarrow
+\text{Identification}
+}
+\]
+and only then
+
+\[
+\boxed{
+\text{choose a statistical procedure that estimates the identified object}.
+}
+\]
+
+\vspace{0.4em}
+
+Modern developments in
+
+\[
+\text{IV},
+\quad
+\text{DiD},
+\quad
+\text{RDD},
+\quad
+\text{treatment effects},
+\quad
+\text{structural estimation}
+\]
+are much easier to understand from this perspective.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{A warning about ``assumptions''}
+
+Econometric assumptions play different roles.
+
+\vspace{0.3em}
+
+\textbf{Specification assumptions:}
+
+\[
+Y_i(d),
+\qquad
+U_{ij}=X_{ij}'\beta+\varepsilon_{ij},
+\qquad
+\text{choice set},
+\qquad
+\text{equilibrium concept}.
+\]
+
+These determine what world we are modeling.
+
+\vspace{0.3em}
+
+\textbf{Identification assumptions:} $D\perp(Y(1),Y(0))$,
+exclusion restrictions, rank conditions, monotonicity,
+support conditions, etc.
+
+These determine what can be learned from observables.
+
+\vspace{0.3em}
+
+\textbf{Inference assumptions:}
+
+sampling structure, clustering, dependence,
+regularity conditions.
+
+\vspace{0.35em}
+
+\begin{alertblock}{Do not put all assumptions into one undifferentiated list}
+They answer different logical questions.
+\end{alertblock}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{What does ``credible'' mean?}
+A credible empirical result requires alignment across all stages:
+\[
+\boxed{
+\begin{array}{ccccc}
+\text{Question}
+&
+\longleftrightarrow
+&
+\text{Estimand}
+&
+\longleftrightarrow
+&
+\text{Specification}
+\\
+&&\downarrow&&\\
+&&\text{Identification}&&\\
+&&\downarrow&&\\
+&&\text{Estimation}&&\\
+&&\downarrow&&\\
+&&\text{Inference}&&
+\end{array}
+}
+\]
+A sophisticated estimator cannot compensate for
+\[
+\text{a poorly defined question},
+\quad
+\text{an inappropriate model},
+\]
+or
+\[
+\text{an unconvincing counterfactual}.
+\]
+\end{frame}
+
+% =========================================================
+\begin{frame}{The main methodological habit}
+
+Before touching the data, try to complete the following sentence:
+
+\vspace{0.4em}
+
+\begin{center}
+\Large
+\textit{``I want to learn \underline{\hspace{3cm}},
+\\[0.4em]
+and I can learn it from these data because
+\underline{\hspace{3cm}}.''}
+\end{center}
+
+\vspace{0.5em}
+
+The first blank is primarily about
+
+\[
+\boxed{\text{Question + Specification + Estimand}.}
+\]
+
+The second blank is primarily about
+
+\[
+\boxed{\text{Identification}.}
+\]
+
+\vspace{0.35em}
+
+Only afterward should we ask:
+\[
+\boxed{\text{How should I estimate it?}}
+\]
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{A roadmap for the rest of the course}
+
+We will repeatedly use the same framework.
+
+\[
+\boxed{
+\text{Question}
+\rightarrow
+\text{Specification \& Estimand}
+\rightarrow
+\text{Identification}
+\rightarrow
+\text{Estimation}
+\rightarrow
+\text{Inference}
+}
+\]
+
+Examples will include:
+\[
+\begin{array}{c}
+\text{Regression and selection on observables}\\
+\text{Instrumental variables and LATE}\\
+\text{Difference-in-differences}\\
+\text{Regression discontinuity}\\
+\text{Panel data}\\
+\text{Treatment-effect heterogeneity}\\
+\text{Structural models and policy counterfactuals}
+\end{array}
+\]
+
+The methods will change.
+
+The sequence of questions should not.
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Takeaways}
+
+\begin{enumerate}
+    \item
+    Econometrics begins with a \textbf{question}, not an estimator.
+
+    \vspace{0.25em}
+
+    \item
+    An \textbf{estimand} is the precise mathematical object that answers
+    the question.
+
+    \vspace{0.25em}
+
+    \item
+    \textbf{Specification} determines what world we are modeling.
+
+    \vspace{0.25em}
+
+    \item
+    \textbf{Identification} determines what can be learned from
+    the population distribution of observables.
+
+    \vspace{0.25em}
+
+    \item
+    \textbf{Estimation} and \textbf{inference} come afterward.
+
+    \vspace{0.25em}
+
+    \item
+    Reduced-form and structural methods are not rival religions but
+    two ends of a spectrum: classify a paper by the role its model
+    plays, not by its estimator.
+\end{enumerate}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{One sentence to remember}
+
+\begin{center}
+
+\vspace{0.6em}
+
+\Huge
+\textbf{
+Do not ask
+\\[0.3em]
+``Which estimator should I use?''
+\\[0.8em]
+until you know
+\\[0.3em]
+``What exactly am I trying to learn?''
+}
+
+\end{center}
+
+\end{frame}
+
+% =========================================================
+\begin{frame}{Selected references}
+
+\scriptsize
+
+Angrist, J. D., and J.-S. Pischke (2009).
+\textit{Mostly Harmless Econometrics: An Empiricist's Companion}.
+Princeton University Press.
+
+\vspace{0.25em}
+
+Heckman, J. J. (2010).
+``Building Bridges between Structural and Program Evaluation
+Approaches to Evaluating Policy.''
+\textit{Journal of Economic Literature}, 48(2), 356--398.
+
+\vspace{0.25em}
+
+Heckman, J. J., and E. Vytlacil (2005).
+``Structural Equations, Treatment Effects and Econometric Policy
+Evaluation.''
+\textit{Econometrica}, 73(3), 669--738.
+
+\vspace{0.25em}
+
+Low, H., and C. Meghir (2017).
+``The Use of Structural Models in Econometrics.''
+\textit{Journal of Economic Perspectives}, 31(2), 33--58.
+
+\vspace{0.25em}
+
+Hudgens, M. G., and M. E. Halloran (2008).
+``Toward Causal Inference with Interference.''
+\textit{Journal of the American Statistical Association},
+103(482), 832--842.
+
+\vspace{0.25em}
+
+White, H. (1980).
+``A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct
+Test for Heteroskedasticity.''
+\textit{Econometrica}, 48(4), 817--838.
+
+\vspace{0.25em}
+
+Abadie, A., S. Athey, G. W. Imbens, and J. M. Wooldridge (2020).
+``Sampling-Based versus Design-Based Uncertainty in Regression Analysis.''
+\textit{Econometrica}, 88(1), 265--296.
+
+\end{frame}
+
+\end{document}

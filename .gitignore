@@ -1,0 +1,68 @@
+# ---------------------------------------------------------
+# LaTeX build artifacts
+# Only .tex sources are tracked in this repo.
+# ---------------------------------------------------------
+
+## Core auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.pdfsync
+
+## Beamer
+*.nav
+*.snm
+*.vrb
+
+## Bibliography
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.brf
+
+## Index / glossary / nomenclature
+*.idx
+*.ilg
+*.ind
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.acn
+*.acr
+*.alg
+*.nlo
+*.nls
+
+## Misc packages
+*.figlist
+*.makefile
+*.figlist-*
+*.auxlock
+*.dpth
+*.md5
+*.xdv
+*.upa
+*.upb
+
+## Compiled output
+## Remove this line if you want the built deck versioned.
+*.pdf
+
+# ---------------------------------------------------------
+# Editor / OS
+# ---------------------------------------------------------
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
