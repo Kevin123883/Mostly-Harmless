@@ -1,0 +1,1702 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% =========================================================
+% Packages
+% =========================================================
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% =========================================================
+% Theme
+% =========================================================
+\usetheme{Boadilla}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{DeepBlue}{RGB}{28,66,120}
+\definecolor{DarkGray}{RGB}{55,55,55}
+\definecolor{SoftGray}{RGB}{242,242,242}
+\definecolor{DarkRed}{RGB}{155,45,45}
+\definecolor{DarkGreen}{RGB}{35,110,75}
+
+\setbeamercolor{structure}{fg=DeepBlue}
+\setbeamercolor{frametitle}{fg=DeepBlue}
+\setbeamercolor{title}{fg=DeepBlue}
+\setbeamercolor{block title}{bg=DeepBlue!12,fg=DeepBlue}
+\setbeamercolor{block body}{bg=DeepBlue!3,fg=black}
+\setbeamercolor{alerted text}{fg=DarkRed}
+
+% =========================================================
+% Layout tuning (compact vertical rhythm)
+% =========================================================
+\setbeamersize{text margin left=1.1em,text margin right=1.1em}
+
+% Many slides contain several display equations; the default
+% display skips are the single largest source of overfull frames.
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{3.5pt plus 2pt minus 1.5pt}%
+  \setlength{\belowdisplayskip}{3.5pt plus 2pt minus 1.5pt}%
+  \setlength{\abovedisplayshortskip}{1.5pt plus 1pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{2.5pt plus 1pt minus 1pt}%
+  \setlength{\jot}{2pt}%
+}
+
+% Tighter blocks: trim the space around the box, not its inner padding
+\addtobeamertemplate{block begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block end}{}{\vspace{-0.35em}}
+\addtobeamertemplate{block alerted begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block alerted end}{}{\vspace{-0.35em}}
+
+% Tighter lists
+\setlength{\leftmargini}{1.5em}
+\setbeamertemplate{itemize/enumerate body begin}{\vspace{-0.2em}}
+\setbeamertemplate{itemize/enumerate body end}{\vspace{-0.2em}}
+
+% Slightly tighter frame titles
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+
+% Ragged-right table columns; narrow columns look much calmer when
+% they are not hyphenated on nearly every line.
+\newcommand{\NoHyph}{\hyphenpenalty=10000\exhyphenpenalty=10000\relax}
+\newcolumntype{L}[1]{>{\RaggedRight\NoHyph\arraybackslash}p{#1}}
+\newcolumntype{B}[1]{>{\RaggedRight\NoHyph\bfseries\arraybackslash}p{#1}}
+
+% =========================================================
+% Commands
+% =========================================================
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\ATE}{\mathrm{ATE}}
+\newcommand{\ATT}{\mathrm{ATT}}
+
+\newcommand{\Question}{\textcolor{DarkRed}{\textbf{Question}}}
+\newcommand{\Spec}{\textcolor{DeepBlue}{\textbf{Specification \& Estimand}}}
+\newcommand{\Ident}{\textcolor{DarkGreen}{\textbf{Identification}}}
+\newcommand{\Est}{\textcolor{violet}{\textbf{Estimation}}}
+\newcommand{\Infer}{\textcolor{orange!80!black}{\textbf{Inference}}}
+
+
+
+% =========================================================
+% Title
+% =========================================================
+\title{Mostly Harmless Econometrics}
+\subtitle{
+\textbf{Session 2: What Does OLS Estimate?}
+\\[0.55em]
+Linear projection
+$\rightarrow$ Weighted contrasts
+$\rightarrow$ Weighted causal effects
+$\rightarrow$ Estimand choice
+}
+\author{Kaiwen Luo}
+\institute{Washington University in St.Louis}
+\date{\today}
+
+\begin{document}
+
+% =========================================================
+\begin{frame}
+    \titlepage
+\end{frame}
+
+
+% ============================================================
+% SECTION: What Does OLS Estimate?
+% ============================================================
+
+\section{What Does OLS Estimate?}
+
+% ------------------------------------------------------------
+\begin{frame}{What Does OLS Estimate? A Modern View}
+\small
+
+A useful way to think about OLS is:
+
+\[
+\boxed{
+\text{Statistical estimand}
+\quad
+\xrightarrow{\text{additional assumptions}}
+\quad
+\text{causal estimand}
+}
+\]
+
+\medskip
+
+OLS does \alert{not} begin with a causal effect. It begins with a
+population linear projection.
+
+\medskip
+
+As we impose additional structure, the same regression coefficient
+may admit increasingly informative representations.
+
+\begin{block}{Three questions}
+For any OLS coefficient, ask:
+\begin{enumerate}
+    \item What is the coefficient \emph{algebraically}?
+    \item Under what assumptions can it be written in terms of potential outcomes?
+    \item Which treatment effects does it average, and with what weights?
+\end{enumerate}
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{The Starting Point: No Causal Assumptions}
+\small
+
+Consider the population linear projection
+\[
+(\alpha^{LP},\beta^{LP})
+=
+\arg\min_{\alpha,\beta}
+\mathbb{E}\left[(Y-\alpha-\beta D)^2\right]
+\qquad\Longrightarrow\qquad
+\boxed{
+\beta^{LP}
+=
+\frac{\mathrm{Cov}(D,Y)}{\mathrm{Var}(D)}
+}
+\]
+provided that \(\mathrm{Var}(D)>0\).
+
+\medskip
+
+\begin{columns}[T]
+\begin{column}{0.42\textwidth}
+This result requires:
+\begin{itemize}
+    \item no potential-outcome model;
+    \item no exogeneity;
+    \item no linear conditional expectation;
+    \item no homogeneous treatment effect.
+\end{itemize}
+\end{column}
+\begin{column}{0.54\textwidth}
+\begin{block}{Interpretation}
+\(\beta^{LP}\) is simply the slope of the best linear predictor of
+\(Y\) using \(D\).
+\end{block}
+\end{column}
+\end{columns}
+
+\medskip
+
+\[
+\boxed{
+\text{OLS is first a projection estimand, not a causal estimand.}
+}
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{The Assumption Ladder}
+\small
+
+It is useful to separate three layers.
+
+\begin{block}{Layer 1: Pure algebra}
+\[
+\beta^{LP}
+=
+\frac{\mathrm{Cov}(D,Y)}
+{\mathrm{Var}(D)}.
+\]
+
+This is always the population OLS estimand.
+\end{block}
+
+\begin{block}{Layer 2: Treatment support}
+Knowing whether \(D\) is
+\[
+\text{binary},\qquad
+\text{ordered discrete},\qquad
+\text{or continuous}
+\]
+allows us to rewrite the same covariance ratio as an average of
+different kinds of contrasts or slopes.
+\end{block}
+
+\begin{block}{Layer 3: Identification assumptions}
+Assumptions such as
+\[
+\mathbb{E}[Y(d)\mid D,X]
+=
+\mathbb{E}[Y(d)\mid X]
+\]
+allow observed conditional contrasts to be interpreted causally.
+\end{block}
+
+\end{frame}
+
+
+% ============================================================
+% BINARY TREATMENT: NO COVARIATES
+% ============================================================
+
+\begin{frame}{Case 1: Binary Treatment, No Covariates}
+\small
+
+Suppose \(D\in\{0,1\}\). Then purely by algebra,
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\mathbb{E}[Y\mid D=1]
+-
+\mathbb{E}[Y\mid D=0].
+}
+\]
+
+No causal assumption is needed for this equality.
+
+\medskip
+
+With potential outcomes
+\(Y = D Y(1)+(1-D)Y(0)\),
+we can write
+
+\[
+\begin{aligned}
+\beta^{OLS}
+&=
+\mathbb{E}[Y(1)\mid D=1]
+-
+\mathbb{E}[Y(0)\mid D=0]
+\\[2mm]
+&=
+\underbrace{
+\mathbb{E}[Y(1)-Y(0)\mid D=1]
+}_{ATT}
++
+\underbrace{
+\mathbb{E}[Y(0)\mid D=1]
+-
+\mathbb{E}[Y(0)\mid D=0]
+}_{\text{selection bias}}.
+\end{aligned}
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Binary Treatment: When Does OLS Become the ATE?}
+\small
+
+Suppose treatment is mean independent of potential outcomes:
+
+\[
+\mathbb{E}[Y(d)\mid D]
+=
+\mathbb{E}[Y(d)],
+\qquad d\in\{0,1\}.
+\]
+
+Then
+
+\[
+\mathbb{E}[Y\mid D=1]
+=
+\mathbb{E}[Y(1)]
+\qquad\text{and}\qquad
+\mathbb{E}[Y\mid D=0]
+=
+\mathbb{E}[Y(0)],
+\]
+
+so that \(\beta^{OLS}=\mathbb{E}[Y(1)-Y(0)]=ATE\). Thus,
+
+\[
+\boxed{
+\frac{\mathrm{Cov}(D,Y)}{\mathrm{Var}(D)}
+\overset{D\in\{0,1\}}{=}
+\mathbb{E}[Y\mid 1]-\mathbb{E}[Y\mid 0]
+\overset{\text{exogeneity}}{=}
+ATE.
+}
+\]
+
+\begin{block}{Key point}
+The first equality is algebra.
+The second equality is identification.
+\end{block}
+
+\end{frame}
+
+
+% ============================================================
+% COVARIATES: GENERAL SETUP
+% ============================================================
+
+\begin{frame}{Adding Covariates: Two Different Objects}
+\small
+
+Consider the familiar additive regression
+\(Y=\alpha+\beta D+X'\gamma+u\).
+By Frisch--Waugh--Lovell,
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\frac{\mathbb{E}[\widetilde D Y]}
+{\mathbb{E}[\widetilde D^2]},
+\qquad
+\widetilde D
+=
+D-L(D\mid 1,X),
+}
+\]
+
+where \(L(D\mid 1,X)\) is the \emph{linear projection} of \(D\) on \(X\).
+
+\medskip
+
+This is generally different from residualizing by the true conditional mean,
+\(D-\mathbb{E}[D\mid X]\).
+
+\begin{alertblock}{Important distinction}
+In general,
+\[
+L(D\mid 1,X)
+\neq
+\mathbb{E}[D\mid X].
+\]
+
+Therefore, ordinary additive OLS with a finite-dimensional set of
+controls does not automatically inherit the clean causal weighting
+formulas that arise under saturated or flexible adjustment.
+\end{alertblock}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{A Clean Benchmark: Flexible Partialling Out}
+\small
+
+Consider instead the partially linear projection
+
+\[
+(\beta^*,g^*)
+=
+\arg\min_{\beta,g}
+\mathbb{E}
+\left[
+\left(Y-\beta D-g(X)\right)^2
+\right],
+\]
+
+where \(g(X)\) is unrestricted.
+Define \(\mu_D(X)=\mathbb{E}[D\mid X]\). Then
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+\left[
+(D-\mu_D(X))Y
+\right]
+}{
+\mathbb{E}
+\left[
+(D-\mu_D(X))^2
+\right]
+}.
+}
+\]
+
+Using iterated expectations,
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+\left[
+\mathrm{Cov}(D,Y\mid X)
+\right]
+}{
+\mathbb{E}
+\left[
+\mathrm{Var}(D\mid X)
+\right]
+}.
+}
+\]
+
+This provides a useful benchmark for all treatment types.
+
+\end{frame}
+
+
+% ============================================================
+% BINARY TREATMENT + COVARIATES
+% ============================================================
+
+\begin{frame}{Case 2: Binary Treatment with Flexible Covariate Adjustment}
+\small
+
+Let
+
+\[
+D\in\{0,1\},
+\qquad
+e(X)=\Pr(D=1\mid X).
+\]
+
+Then
+
+\[
+\mathrm{Var}(D\mid X)
+=
+e(X)\{1-e(X)\}.
+\]
+
+Also,
+
+\[
+\mathrm{Cov}(D,Y\mid X)
+=
+e(X)\{1-e(X)\}
+\left[
+\mathbb{E}(Y\mid D=1,X)
+-
+\mathbb{E}(Y\mid D=0,X)
+\right].
+\]
+
+Hence
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+\left[
+e(X)\{1-e(X)\}
+\Delta_Y(X)
+\right]
+}{
+\mathbb{E}
+\left[
+e(X)\{1-e(X)\}
+\right]
+},
+}
+\]
+
+where
+
+\[
+\Delta_Y(X)
+=
+\mathbb{E}[Y\mid D=1,X]
+-
+\mathbb{E}[Y\mid D=0,X].
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Binary Treatment + Conditional Ignorability}
+\small
+
+Suppose conditional mean independence holds together with overlap:
+
+\[
+\mathbb{E}[Y(d)\mid D,X]
+=
+\mathbb{E}[Y(d)\mid X],
+\quad d\in\{0,1\},
+\qquad\qquad
+0<e(X)<1.
+\]
+
+Define the conditional average treatment effect
+
+\[
+\tau(X)
+=
+\mathbb{E}[Y(1)-Y(0)\mid X].
+\]
+
+Then \(\Delta_Y(X)=\tau(X)\), and therefore
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+\left[
+e(X)\{1-e(X)\}\tau(X)
+\right]
+}{
+\mathbb{E}
+\left[
+e(X)\{1-e(X)\}
+\right]
+}.
+}
+\]
+
+\begin{block}{Interpretation}
+The coefficient is an
+\alert{overlap-weighted average treatment effect},
+not generally the population ATE.
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Binary Treatment: Why the OLS Weight Matters}
+\small
+
+The weight is proportional to \(e(X)\{1-e(X)\}\).
+It is largest when \(e(X)=\tfrac{1}{2}\), and approaches zero when
+\(e(X)\rightarrow 0\) or \(e(X)\rightarrow 1\).
+
+\medskip
+
+Thus the estimand emphasizes covariate cells in which both treated
+and untreated observations are common.
+
+\medskip
+
+In general,
+
+\[
+\boxed{
+\beta^*
+\neq
+ATE
+=
+\mathbb{E}[\tau(X)].
+}
+\]
+
+Equality holds under additional conditions, for example:
+
+\begin{itemize}
+    \item homogeneous treatment effects, \(\tau(X)=\tau\);
+    \item randomized treatment with constant propensity, \(e(X)=p\);
+    \item or other special restrictions that make the OLS weights
+    unrelated to treatment-effect heterogeneity.
+\end{itemize}
+
+\end{frame}
+
+
+% ============================================================
+% ORDERED DISCRETE TREATMENT
+% ============================================================
+
+\begin{frame}{Case 3: Ordered Discrete Treatment, No Covariates}
+\small
+
+Suppose
+
+\[
+D\in\{d_0,d_1,\ldots,d_J\},
+\qquad
+d_0<d_1<\cdots<d_J,
+\]
+
+and define the conditional mean
+\(m(d)=\mathbb{E}[Y\mid D=d]\).
+
+\medskip
+
+Since \(\mathbb{E}[Y-m(D)\mid D]=0\), the residual \(Y-m(D)\) is
+uncorrelated with \(D\), and we obtain
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\frac{
+\mathrm{Cov}(D,m(D))
+}{
+\mathrm{Var}(D)
+}.
+}
+\]
+
+\begin{block}{Implication}
+OLS only uses the conditional mean function \(m(\cdot)\).
+The question becomes: how does the covariance ratio summarize the
+shape of \(m(\cdot)\) across the support of \(D\)?
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Case 3: Ordered Discrete Treatment as Weighted Slopes}
+\small
+
+Define the adjacent slope
+
+\[
+s_j
+=
+\frac{
+m(d_j)-m(d_{j-1})
+}{
+d_j-d_{j-1}
+},
+\qquad j=1,\ldots,J.
+\]
+
+Then
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\sum_{j=1}^{J} w_j s_j,
+}
+\qquad
+w_j
+=
+\frac{
+(d_j-d_{j-1})
+\,\mathrm{Cov}
+\left(
+D,\mathbf{1}\{D\geq d_j\}
+\right)
+}{
+\mathrm{Var}(D)
+}.
+\]
+
+Moreover,
+
+\[
+w_j\geq 0,
+\qquad
+\sum_{j=1}^{J}w_j=1.
+\]
+
+\begin{block}{Interpretation}
+OLS is a convex combination of adjacent slopes of the conditional
+mean function. Margins near the middle of the distribution of \(D\)
+typically receive the largest weights.
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Ordered Discrete Treatment: Causal Interpretation}
+\small
+
+Suppose
+\(\mathbb{E}[Y(d)\mid D]=\mathbb{E}[Y(d)]\) for every \(d\).
+Then \(m(d)=\mathbb{E}[Y(d)]\). Therefore,
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\sum_{j=1}^{J}
+w_j
+\frac{
+\mathbb{E}[Y(d_j)-Y(d_{j-1})]
+}{
+d_j-d_{j-1}
+}.
+}
+\]
+
+\begin{block}{Interpretation}
+OLS is a weighted average of causal effects associated with
+\emph{different treatment margins}:
+\[
+d_0\rightarrow d_1,\quad
+d_1\rightarrow d_2,\quad
+\ldots,\quad
+d_{J-1}\rightarrow d_J.
+\]
+\end{block}
+
+Unlike the binary case, there is no longer a unique treatment margin.
+
+\medskip
+
+\scriptsize
+Related result: Yitzhaki (1996), \emph{Journal of Business \& Economic Statistics}.
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Ordered Discrete Treatment with Covariates}
+\small
+
+Under flexible partialling out,
+
+\[
+\beta^*
+=
+\frac{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)\beta(X)
+]
+}{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)
+]
+},
+\qquad
+\beta(X)
+=
+\frac{
+\mathrm{Cov}(D,Y\mid X)
+}{
+\mathrm{Var}(D\mid X)
+}.
+\]
+
+Within each covariate cell, with \(m(d,X)=\mathbb{E}[Y\mid D=d,X]\),
+
+\[
+\beta(X)
+=
+\sum_{j=1}^{J}
+w_j(X)
+\frac{
+m(d_j,X)-m(d_{j-1},X)
+}{
+d_j-d_{j-1}
+}.
+\]
+
+Thus OLS contains \alert{two layers of weighting}:
+
+\[
+\boxed{
+\underbrace{\mathrm{Var}(D\mid X)}_{\text{across covariate cells}}
+\times
+\underbrace{w_j(X)}_{\text{across treatment margins}}.
+}
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Ordered Discrete Treatment + Conditional Ignorability}
+\small
+
+Suppose
+\(\mathbb{E}[Y(d)\mid D,X]=\mathbb{E}[Y(d)\mid X]\).
+Then \(m(d,X)=\mathbb{E}[Y(d)\mid X]\).
+
+\medskip
+
+Define the conditional causal slope
+
+\[
+\tau_j(X)
+=
+\frac{
+\mathbb{E}[Y(d_j)-Y(d_{j-1})\mid X]
+}{
+d_j-d_{j-1}
+}.
+\]
+
+Then
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+\left[
+\mathrm{Var}(D\mid X)
+\sum_{j=1}^{J}
+w_j(X)\tau_j(X)
+\right]
+}{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)
+]
+}.
+}
+\]
+
+\begin{block}{Interpretation}
+A variance-weighted average across covariate cells,
+within which OLS further averages across treatment margins.
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{A Caveat: Unordered Discrete Treatments}
+\small
+
+Suppose instead that treatment categories have no natural ordering:
+\(D\in\{\text{A},\text{B},\text{C}\}\).
+
+\medskip
+
+Assigning arbitrary numerical codes such as
+\(A=1,\ B=2,\ C=3\)
+and estimating a single regression slope is generally not meaningful.
+Changing the coding changes the estimand.
+
+\medskip
+
+The natural approach is to use treatment indicators:
+
+\[
+Y
+=
+\alpha
++
+\beta_B\mathbf{1}\{D=B\}
++
+\beta_C\mathbf{1}\{D=C\}
++
+u.
+\]
+
+Without covariates,
+
+\[
+\beta_B
+=
+\mathbb{E}[Y\mid D=B]
+-
+\mathbb{E}[Y\mid D=A],
+\]
+
+and similarly for \(\beta_C\).
+
+\begin{block}{Conclusion}
+A scalar ``OLS slope'' is intrinsically meaningful for an
+\emph{ordered scalar treatment}, but not for arbitrarily coded
+unordered categories.
+\end{block}
+
+\end{frame}
+
+
+% ============================================================
+% CONTINUOUS TREATMENT
+% ============================================================
+
+\begin{frame}{Case 4: Continuous Treatment, No Covariates}
+\small
+
+Suppose \(D\) is continuously distributed on
+\(\mathcal{D}=[a,b]\), and define
+\(m(d)=\mathbb{E}[Y\mid D=d]\). Again,
+
+\[
+\beta^{OLS}
+=
+\frac{
+\mathrm{Cov}(D,m(D))
+}{
+\mathrm{Var}(D)
+}.
+\]
+
+If \(m(d)\) is differentiable, then
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\int_a^b
+\omega(d)m'(d)\,dd,
+}
+\qquad
+\boxed{
+\omega(d)
+=
+\frac{
+\mathrm{Cov}
+\left(
+D,\mathbf{1}\{D\geq d\}
+\right)
+}{
+\mathrm{Var}(D)
+}.
+}
+\]
+
+The weights satisfy
+
+\[
+\omega(d)\geq 0,
+\qquad
+\int_a^b\omega(d)\,dd=1.
+\]
+
+\begin{block}{Interpretation}
+The continuous analogue of the ordered discrete case: adjacent
+slopes become local derivatives \(m'(d)\).
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Continuous Treatment: What Does the Slope Average?}
+\small
+
+The OLS coefficient is therefore a weighted average derivative:
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\int
+\omega(d)
+\frac{\partial}{\partial d}
+\mathbb{E}[Y\mid D=d]
+\,dd.
+}
+\]
+
+This should be distinguished from the ordinary average derivative
+
+\[
+ADE
+=
+\mathbb{E}[m'(D)]
+=
+\int
+m'(d)f_D(d)\,dd.
+\]
+
+In general,
+
+\[
+\boxed{
+\omega(d)\neq f_D(d)
+}
+\qquad\Longrightarrow\qquad
+\boxed{
+\beta^{OLS}\neq ADE.
+}
+\]
+
+\begin{block}{Key lesson}
+With a nonlinear conditional mean, a linear regression coefficient
+is one particular weighted summary of local slopes.
+\end{block}
+
+\scriptsize
+Related result: Yitzhaki (1996).
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Continuous Treatment: Causal Interpretation}
+\small
+
+Suppose
+\(\mathbb{E}[Y(d)\mid D]=\mathbb{E}[Y(d)]\) for every \(d\).
+Then \(m(d)=\mathbb{E}[Y(d)]\). Hence
+
+\[
+\boxed{
+\beta^{OLS}
+=
+\int
+\omega(d)
+\frac{\partial}{\partial d}
+\mathbb{E}[Y(d)]
+\,dd.
+}
+\]
+
+Thus the coefficient can be interpreted as a weighted average of
+marginal causal responses at different treatment levels.
+
+\medskip
+
+But this does \alert{not} imply that OLS estimates a uniquely
+privileged ``average causal effect.''
+
+\begin{block}{Important}
+For continuous treatments, different scientifically meaningful
+summaries include:
+\[
+\text{dose-response curves},\quad
+\text{shift effects},\quad
+\text{average derivative effects},\quad
+\text{weighted derivative effects}.
+\]
+There is no unique scalar analogue of the binary-treatment ATE.
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Case 5: Continuous Treatment with Covariates}
+\small
+
+Under flexible partialling out,
+
+\[
+\beta^*
+=
+\frac{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)\beta(X)
+]
+}{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)
+]
+},
+\qquad
+\beta(X)
+=
+\frac{
+\mathrm{Cov}(D,Y\mid X)
+}{
+\mathrm{Var}(D\mid X)
+}.
+\]
+
+For a differentiable conditional mean
+\(m(d,x)=\mathbb{E}[Y\mid D=d,X=x]\),
+we can write
+
+\[
+\boxed{
+\beta(x)
+=
+\int_{\mathcal{D}(x)}
+\omega(d\mid x)
+\frac{\partial m(d,x)}{\partial d}
+\,dd,
+}
+\]
+
+with
+
+\[
+\omega(d\mid x)
+=
+\frac{
+\mathrm{Cov}
+\left(
+D,\mathbf{1}\{D\geq d\}\mid X=x
+\right)
+}{
+\mathrm{Var}(D\mid X=x)
+}.
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Continuous Treatment + Conditional Ignorability}
+\small
+
+Suppose
+\(\mathbb{E}[Y(d)\mid D,X]=\mathbb{E}[Y(d)\mid X]\).
+Then \(m(d,x)=\mathbb{E}[Y(d)\mid X=x]\). Therefore,
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+\left[
+\mathrm{Var}(D\mid X)
+\int
+\omega(d\mid X)
+\frac{\partial}{\partial d}
+\mathbb{E}[Y(d)\mid X]
+\,dd
+\right]
+}{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)
+]
+}.
+}
+\]
+
+Again there are two layers of weighting:
+
+\[
+\boxed{
+\underbrace{\mathrm{Var}(D\mid X)}_{\text{which covariate cells?}}
+\times
+\underbrace{\omega(d\mid X)}_{\text{which treatment margins?}}.
+}
+\]
+
+\begin{block}{Interpretation}
+A weighted average of conditional marginal causal effects.
+\end{block}
+
+\end{frame}
+
+
+% ============================================================
+% WHAT IS AND IS NOT CLEAN
+% ============================================================
+
+\begin{frame}{Where the Clean Results Stop}
+\small
+
+The previous covariate-adjusted formulas used the benchmark
+\(D-\mathbb{E}[D\mid X]\).
+Ordinary additive OLS instead uses
+\(D-L(D\mid 1,X)\).
+
+\medskip
+
+If \(L(D\mid 1,X)\neq\mathbb{E}[D\mid X]\)
+and treatment effects are heterogeneous, the coefficient generally
+does \alert{not} reduce to the simple weighting formulas derived above.
+
+\medskip
+
+\begin{alertblock}{Status of the literature}
+There are important characterizations for particular settings,
+especially for binary treatment.
+
+However, for an arbitrarily misspecified additive OLS regression
+with heterogeneous effects, there is no single universal
+interpretation such as
+
+\[
+\text{``OLS always equals a particular ATE.''}
+\]
+
+The interpretation depends on the specification and the source of
+treatment variation.
+\end{alertblock}
+
+\scriptsize
+See, e.g., S{\l}oczy\'nski (2022) and Lee and Han (2024).
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Binary Treatment: Ordinary Additive OLS Can Reweight Effects}
+\small
+
+For binary treatment, modern work shows that when treatment effects
+are heterogeneous, the coefficient from
+
+\[
+Y=\alpha+\beta D+X'\gamma+u
+\]
+
+can place implicit weights on different treatment-effect components
+that differ substantially from their population shares.
+
+\medskip
+
+Therefore,
+
+\[
+\boxed{
+\text{conditional ignorability alone}
+\;\not\Rightarrow\;
+\text{ordinary additive OLS coefficient}=ATE.
+}
+\]
+
+The problem is not necessarily confounding.
+The problem may instead be the estimand generated by the regression's
+implicit weighting scheme.
+
+\begin{block}{Modern interpretation}
+Even after identification has been solved, one still needs to ask:
+\[
+\boxed{
+\text{Which causal effects does this regression average?}
+}
+\]
+\end{block}
+
+\scriptsize
+S{\l}oczy\'nski (2022), \emph{Review of Economics and Statistics}.
+
+\end{frame}
+
+
+% ============================================================
+% MODERN TARGETS
+% ============================================================
+
+\begin{frame}{A More Modern Strategy: Choose the Estimand First}
+\small
+
+Rather than asking
+``What causal parameter does this regression happen to estimate?'',
+a modern approach is:
+
+\[
+\boxed{
+\text{Scientific question}
+\rightarrow
+\text{causal estimand}
+\rightarrow
+\text{identification}
+\rightarrow
+\text{estimator}.
+}
+\]
+
+Examples include:
+
+\begin{itemize}
+    \item Binary treatment:
+    \[
+    ATE,\quad ATT,\quad ATU,\quad
+    \text{overlap-weighted ATE}.
+    \]
+
+    \item Multi-valued treatment:
+    \(\mathbb{E}[Y(d_j)-Y(d_k)]\)
+    or prespecified averages of treatment contrasts.
+
+    \item Continuous treatment:
+    \[
+    \text{dose-response curve},
+    \quad
+    \text{shift effect},
+    \quad
+    ADE,
+    \quad
+    \text{weighted ADE}.
+    \]
+\end{itemize}
+
+OLS may estimate one useful summary, but the regression coefficient
+need not define the scientific target.
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{An Alternative Modern Object: Average Linear Regression Function}
+\small
+
+Graham and Pinto propose working with the conditional linear
+projection within each covariate cell. Let
+
+\[
+b_0(x)
+=
+\frac{
+\mathrm{Cov}(D,Y\mid X=x)
+}{
+\mathrm{Var}(D\mid X=x)
+}.
+\]
+
+Instead of the pooled OLS weighting, consider
+
+\[
+\frac{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)b_0(X)
+]
+}{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)
+]
+}
+\qquad\text{vs.}\qquad
+\boxed{
+\beta_{ALRF}
+=
+\mathbb{E}[b_0(X)].
+}
+\]
+
+\begin{block}{Why this matters}
+The choice between these two objects is itself an estimand choice.
+
+Pooled regression automatically gives more weight to cells with
+greater treatment variance.
+
+The average linear regression function averages conditional
+regression slopes over the covariate distribution instead.
+\end{block}
+
+\scriptsize
+Graham and Pinto (2022), \emph{Journal of Econometrics}.
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Continuous Treatments: The Frontier Is About the Target}
+\small
+
+For continuous treatment, the algebraic interpretation of OLS is
+well understood:
+
+\[
+\boxed{
+OLS
+=
+\text{a particular weighted average derivative}.
+}
+\]
+
+What is \alert{not} uniquely determined is whether this is the
+scientifically appropriate causal summary.
+
+\medskip
+
+Recent work studies alternative targets such as
+
+\[
+ADE
+=
+\mathbb{E}
+\left[
+\frac{\partial}{\partial d}
+\mathbb{E}[Y(d)\mid X]
+\bigg|_{d=D}
+\right],
+\]
+
+as well as more general weighted average derivative effects.
+
+\begin{alertblock}{Frontier status}
+There is no single universally preferred scalar causal estimand for
+a general continuous treatment.
+
+The appropriate target depends on the intervention and the scientific
+question.
+\end{alertblock}
+
+\scriptsize
+See Graham and Pinto (2022) and Hines, Diaz-Ordaz, and Vansteelandt
+(2026).
+
+\end{frame}
+
+
+% ============================================================
+% SYNTHESIS
+% ============================================================
+
+\begin{frame}{Summary I: Without Covariates}
+\small
+
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+\begin{block}{Binary \(D\)}
+\[
+\beta^{OLS}
+=
+\mathbb{E}[Y\mid 1]
+-
+\mathbb{E}[Y\mid 0].
+\]
+
+\medskip
+Under exogeneity:
+\[
+\boxed{\beta^{OLS}=ATE.}
+\]
+\end{block}
+\end{column}
+
+\begin{column}{0.32\textwidth}
+\begin{block}{Ordered discrete \(D\)}
+\[
+\beta^{OLS}
+=
+\sum_j w_j
+\frac{
+m(d_j)-m(d_{j-1})
+}{
+d_j-d_{j-1}
+}.
+\]
+
+Under exogeneity: a weighted average of
+\alert{causal treatment-margin slopes}.
+\end{block}
+\end{column}
+
+\begin{column}{0.32\textwidth}
+\begin{block}{Continuous \(D\)}
+\[
+\beta^{OLS}
+=
+\int \omega(d)m'(d)\,dd.
+\]
+
+\medskip
+Under exogeneity: a weighted average of
+\alert{marginal causal responses}.
+\end{block}
+\end{column}
+\end{columns}
+
+\bigskip
+
+\[
+\boxed{
+\text{Same covariance ratio; the support of } D
+\text{ determines what it averages.}
+}
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{Summary II: With Flexible Covariate Adjustment}
+\small
+
+The common formula is
+
+\[
+\boxed{
+\beta^*
+=
+\frac{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)\beta(X)
+]
+}{
+\mathbb{E}
+[
+\mathrm{Var}(D\mid X)
+]
+}.
+}
+\]
+
+\begin{block}{Binary treatment}
+\[
+\beta(X)
+=
+\mathbb{E}[Y\mid 1,X]
+-
+\mathbb{E}[Y\mid 0,X].
+\]
+
+Under conditional ignorability:
+\[
+\boxed{
+\beta^*
+=
+\text{overlap-weighted CATE}.
+}
+\]
+\end{block}
+
+\begin{block}{Ordered discrete treatment}
+\[
+\boxed{
+\beta(X)
+=
+\text{weighted average across discrete treatment margins}.
+}
+\]
+\end{block}
+
+\begin{block}{Continuous treatment}
+\[
+\boxed{
+\beta(X)
+=
+\text{weighted average of conditional derivatives}.
+}
+\]
+\end{block}
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{The Main Lesson}
+\small
+
+The classical question is:
+``What is the coefficient on \(D\)?''
+The modern question is:
+
+\[
+\boxed{
+\begin{array}{c}
+\text{What population variation does the coefficient use,}\\
+\text{and which heterogeneous effects does it average?}
+\end{array}
+}
+\]
+
+\medskip
+
+OLS can be viewed as an \alert{averaging machine}:
+
+\[
+\boxed{
+\text{OLS}
+=
+\text{selection of identifying variation}
++
+\text{implicit weighting}.
+}
+\]
+
+For binary treatment without covariates, this complexity is largely
+hidden because there is only one treatment margin.
+For multivalued or continuous treatment, the weighting problem
+becomes explicit.
+
+\bigskip
+
+\[
+\boxed{
+\text{Whose effect?}
+\qquad
+\text{At which treatment margin?}
+\qquad
+\text{With what weight?}
+}
+\]
+
+\end{frame}
+
+
+% ------------------------------------------------------------
+\begin{frame}{From ``Regression First'' to ``Estimand First''}
+\small
+
+A useful intellectual progression is
+
+\[
+\begin{array}{c}
+\boxed{\text{Regression coefficient}}
+\\[1mm]
+\Downarrow
+\\[1mm]
+\boxed{\text{Population linear projection estimand}}
+\\[1mm]
+\Downarrow
+\\[1mm]
+\boxed{\text{Weighted average of conditional contrasts or slopes}}
+\\[1mm]
+\Downarrow\ \ \text{\scriptsize identification assumptions}
+\\[1mm]
+\boxed{\text{Weighted average of causal effects}}
+\\[1mm]
+\Downarrow
+\\[1mm]
+\boxed{\text{Ask whether this is the causal estimand we actually want.}}
+\end{array}
+\]
+
+\medskip
+
+This last step is the central modern shift:
+
+\[
+\boxed{
+\text{Define the estimand first; choose the estimator second.}
+}
+\]
+
+\end{frame}
+
+
+% ============================================================
+% REFERENCES
+% ============================================================
+
+\begin{frame}{Selected References}
+\footnotesize
+
+\begin{itemize}
+
+    \item Graham, B. S., and C. C. de Xavier Pinto (2022).
+    ``Semiparametrically Efficient Estimation of the Average Linear
+    Regression Function.''
+    \emph{Journal of Econometrics}, 226(1), 115--138.
+
+    \item Hines, O. J., K. Diaz-Ordaz, and S. Vansteelandt (2026).
+    ``Parameterizing the Effect of a Continuous Treatment Using
+    Average Derivative Effects.''
+    \emph{Biometrika}, 113(2).
+
+    \item Ishimaru, S. (2024).
+    ``Empirical Decomposition of the IV--OLS Gap with Heterogeneous
+    and Nonlinear Effects.''
+    \emph{Review of Economics and Statistics}, 106(2), 505--520.
+
+    \item Lee, M.-J., and C. Han (2024).
+    ``Ordinary Least Squares and Instrumental-Variables Estimators
+    for Any Outcome and Heterogeneity.''
+    \emph{Stata Journal}, 24(1), 72--92.
+
+    \item S{\l}oczy\'nski, T. (2022).
+    ``Interpreting OLS Estimands When Treatment Effects Are
+    Heterogeneous: Smaller Groups Get Larger Weights.''
+    \emph{Review of Economics and Statistics}, 104(3), 501--509.
+
+    \item Yitzhaki, S. (1996).
+    ``On Using Linear Regressions in Welfare Economics.''
+    \emph{Journal of Business \& Economic Statistics}, 14(4), 478--486.
+
+\end{itemize}
+
+\end{frame}
+
+
+
+
+\end{document}
