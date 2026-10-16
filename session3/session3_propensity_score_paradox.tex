@@ -1,0 +1,397 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{amsmath,amssymb,mathtools,bm,booktabs,array,ragged2e,microtype,graphicx,xcolor}
+\usetheme{Boadilla}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\definecolor{DeepBlue}{RGB}{28,66,120}
+\definecolor{DarkGray}{RGB}{55,55,55}
+\definecolor{SoftGray}{RGB}{242,242,242}
+\definecolor{DarkRed}{RGB}{155,45,45}
+\definecolor{DarkGreen}{RGB}{35,110,75}
+\setbeamercolor{structure}{fg=DeepBlue}
+\setbeamercolor{frametitle}{fg=DeepBlue}
+\setbeamercolor{title}{fg=DeepBlue}
+\setbeamercolor{block title}{bg=DeepBlue!12,fg=DeepBlue}
+\setbeamercolor{block body}{bg=DeepBlue!3,fg=black}
+\setbeamercolor{alerted text}{fg=DarkRed}
+\setbeamersize{text margin left=1.1em,text margin right=1.1em}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\AtBeginDocument{\setlength{\abovedisplayskip}{3.5pt plus 2pt minus 1.5pt}\setlength{\belowdisplayskip}{3.5pt plus 2pt minus 1.5pt}\setlength{\jot}{2pt}}
+\addtobeamertemplate{block begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block end}{}{\vspace{-0.35em}}
+\setlength{\leftmargini}{1.5em}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\ATE}{\mathrm{ATE}}
+\newcommand{\ATT}{\mathrm{ATT}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Question}{\textcolor{DarkRed}{\textbf{Question}}}
+\newcommand{\Ident}{\textcolor{DarkGreen}{\textbf{Identification}}}
+\newcommand{\Est}{\textcolor{violet}{\textbf{Estimation}}}
+\newcommand{\Infer}{\textcolor{orange!80!black}{\textbf{Inference}}}
+\title{Mostly Harmless Econometrics}
+\subtitle{\textbf{Session 3: Propensity Scores and the Efficiency Paradox}\\[0.55em] Balancing \(\rightarrow\) Weighting \(\rightarrow\) Efficiency \(\rightarrow\) Estimated Scores}
+\author{Kaiwen Luo}
+\institute{Washington University in St. Louis}
+\date{\today}
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+
+\section{Identification and Dimension Reduction}
+\begin{frame}{The Central Puzzle}
+\small
+Suppose we observe a binary treatment \(D\), an outcome \(Y\), and rich baseline covariates \(X\).
+\medskip
+\begin{block}{Three seemingly conflicting claims}
+\begin{enumerate}
+\item Controlling for the \alert{scalar} propensity score \(p(X)\) is sufficient for causal identification.
+\item Controlling for the \alert{full vector} \(X\) may yield more precise estimates.
+\item Replacing the \alert{true} propensity score with an \alert{estimated} one can improve an IPW estimator.
+\end{enumerate}
+\end{block}
+\medskip
+\[
+\boxed{\text{Identification} \;\neq\; \text{Estimand} \;\neq\; \text{Statistical efficiency}}
+\]
+\textit{Roadmap:} Rosenbaum--Rubin (1983) \(\rightarrow\) Hahn (1998) \(\rightarrow\) Angrist--Hahn (2004) \(\rightarrow\) Hirano--Imbens--Ridder (2003).
+\end{frame}
+
+\begin{frame}{Start with Potential Outcomes and Conditional Independence}
+\small
+\[
+Y=DY_1+(1-D)Y_0,\qquad D\in\{0,1\}, \qquad p(X)=\Pp(D=1\mid X).
+\]
+\begin{block}{Conditional Independence Assumption (CIA)}
+\[
+(Y_0,Y_1)\perp D\mid X.
+\]
+Conditional on observed baseline characteristics, treatment is as good as randomly assigned.
+\end{block}
+\medskip
+With overlap, \(0<p(X)<1\) almost surely, define
+\[
+m_d(X)=\E[Y\mid D=d,X]=\E[Y_d\mid X],\qquad
+\ATE=\E[m_1(X)-m_0(X)].
+\]
+\alert{CIA is a substantive identifying assumption, not a statistical consequence of estimating a score.}
+\end{frame}
+
+\begin{frame}{Rosenbaum--Rubin: A One-Dimensional Balancing Score}
+\small
+\begin{block}{Propensity Score Theorem (Rosenbaum and Rubin, 1983)}
+\[
+(Y_0,Y_1)\perp D\mid X
+\quad\Longrightarrow\quad
+\boxed{(Y_0,Y_1)\perp D\mid p(X).}
+\]
+\end{block}
+\medskip
+\begin{itemize}
+\item A high-dimensional control vector can be reduced to one number for \emph{identification}.
+\item People with the same \(p(X)\) need not have the same covariate values.
+\item Equal scores balance \emph{distributions of covariates} across treatment status, not the outcomes of individual matched pairs.
+\end{itemize}
+\medskip
+\begin{block}{Example: job training}
+A person's age, education, employment history, and family background may jointly determine enrollment. For identification, matching on the correctly specified \(p(X)\) can replace exact matching on every characteristic.
+\end{block}
+\end{frame}
+
+\begin{frame}{Why Does the Balancing-Score Theorem Hold?}
+\small
+For \(j\in\{0,1\}\), it suffices to show that conditioning on \(Y_j\) does not change the treatment probability once we know \(p(X)\):
+\begin{align*}
+\Pp(D=1\mid Y_j,p(X))
+&=\E\big[\E[D\mid Y_j,X,p(X)]\mid Y_j,p(X)\big]\\
+&=\E\big[\E[D\mid Y_j,X]\mid Y_j,p(X)\big]\\
+&\stackrel{\mathrm{CIA}}{=}\E\big[\E[D\mid X]\mid Y_j,p(X)\big]\\
+&=\E[p(X)\mid Y_j,p(X)]=p(X).
+\end{align*}
+\begin{block}{Takeaway}
+Conditioning on \(p(X)\) eliminates selection on \(X\) for identifying potential-outcome means. It does \alert{not} claim that \(p(X)\) captures everything that predicts \(Y\).
+\end{block}
+\end{frame}
+
+\section{Matching, Weighting, and Regression}
+\begin{frame}{Two Implementations: Matching and IPW}
+\small
+\textbf{Propensity-score matching:} compare treated and untreated observations with similar scores.
+\[
+\ATT=\E\!\left[\E[Y\mid D=1,p(X)]-\E[Y\mid D=0,p(X)]\mid D=1\right].
+\]
+\medskip
+\textbf{Inverse probability weighting (IPW):} reweight the observed outcomes to reconstruct potential-outcome means.
+\[
+\E[Y_1]=\E\left[\frac{DY}{p(X)}\right],\qquad
+\E[Y_0]=\E\left[\frac{(1-D)Y}{1-p(X)}\right].
+\]
+\[
+\boxed{\ATE=\E\left[\frac{DY}{p(X)}-\frac{(1-D)Y}{1-p(X)}\right].}
+\]
+\begin{block}{Intuition}
+A treated observation who was unlikely to be treated gets greater weight, \(1/p(X)\); an untreated observation who was unlikely to be untreated gets \(1/(1-p(X))\).
+\end{block}
+\end{frame}
+
+\begin{frame}{What Does Regression Weight?}
+\small
+Consider a population regression of \(Y\) on \(D\) plus a \emph{saturated} set of controls for \(X\). By regression anatomy,
+\[
+\beta_R=\frac{\E[(D-p(X))Y]}{\E[(D-p(X))^2]}.
+\]
+Write the conditional mean as
+\[
+\E[Y\mid D,X]=m_0(X)+\tau(X)D,\qquad \tau(X)=m_1(X)-m_0(X).
+\]
+Then
+\[
+\boxed{\beta_R=\frac{\E[p(X)(1-p(X))\tau(X)]}{\E[p(X)(1-p(X))]}.}
+\]
+\begin{block}{Key insight from Section 3.3.1}
+OLS gives the greatest weight to covariate cells with balanced treated/control frequencies: \(p(X)\approx 1/2\).
+\end{block}
+\end{frame}
+
+\begin{frame}{Same Conditional Effects, Different Target Populations}
+\small
+Under CIA and overlap, let \(\tau(X)=\E[Y_1-Y_0\mid X]\).
+\medskip
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Estimand} & \textbf{Formula} & \textbf{Relative weight on }\(X\)\\
+\midrule
+ATE & \(\E[\tau(X)]\) & \(1\)\\[0.4em]
+ATT & \(\dfrac{\E[p(X)\tau(X)]}{\E[p(X)]}\) & \(p(X)\)\\[0.6em]
+Saturated OLS & \(\dfrac{\E[p(X)(1-p(X))\tau(X)]}{\E[p(X)(1-p(X))]}\) & \(p(X)(1-p(X))\)\\
+\bottomrule
+\end{tabular}
+\end{center}
+\medskip
+\begin{itemize}
+\item If treatment effects are constant, all three targets coincide.
+\item With heterogeneous effects, different results can reflect \emph{different estimands}, not estimator failure.
+\end{itemize}
+\end{frame}
+
+\section{The Three Efficiency Puzzles}
+\begin{frame}{Paradox I: Sufficient for Identification, Not for Efficiency}
+\small
+\Question: If \(p(X)\) suffices for identification, why retain the full \(X\)?
+\medskip
+\begin{block}{Job-training example}
+Let \(X=(X_1,X_2)\):
+\begin{itemize}
+\item \(X_1\): prior unemployment predicts participation in training;
+\item \(X_2\): ability strongly predicts earnings, but does \emph{not} predict participation after controlling for \(X_1\).
+\end{itemize}
+\[
+\Pp(D=1\mid X_1,X_2)=p(X_1),\qquad
+\E[Y_d\mid X_1,X_2]\text{ varies with }X_2.
+\]
+\end{block}
+\medskip
+Matching on \(p(X_1)\) is sufficient for identification. Yet adjusting for \(X_2\) can reduce unexplained outcome variation.
+\[
+\boxed{\text{A balancing score is not an outcome-sufficient statistic.}}
+\]
+\textit{Hahn (1998):} discarding outcome-predictive covariates can carry an asymptotic efficiency cost.
+\end{frame}
+
+\begin{frame}{An Extreme Illustration: Precision Without Confounding}
+\small
+Suppose \(D\perp X_2\), and outcomes satisfy
+\[
+Y=\tau D+10X_2+\varepsilon,
+\qquad \E[\varepsilon\mid D,X_2]=0.
+\]
+Because \(X_2\) does not predict treatment, omitting it need not bias the treatment coefficient.
+\medskip
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{Without outcome adjustment}
+\[
+Y=\alpha+\beta D+u,
+\]
+\(u\) includes \(10X_2\); residual noise can be large.
+\end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{block}{With outcome adjustment}
+\[
+Y=\alpha+\beta D+\gamma X_2+v.
+\]
+Less residual noise can deliver a smaller standard error.
+\end{block}
+\end{column}
+\end{columns}
+\medskip
+\alert{No bias reduction is needed for an efficiency gain.} This motivates efficient methods that combine treatment and outcome information.
+\end{frame}
+
+\begin{frame}{Paradox II: Why Compress Covariates in a Finite Sample?}
+\small
+\Question: If full-covariate adjustment can be more efficient asymptotically, why use a propensity score?
+\medskip
+Suppose there are \(20\) binary pre-treatment covariates:
+\[
+\underbrace{2^{20}}_{1{,}048{,}576}\quad\text{potential covariate cells}.
+\]
+\begin{itemize}
+\item Exact matching on \(X\) may leave many sparse or empty cells.
+\item A parsimonious model \(p(X)=\Lambda(X'\gamma)\) replaces multidimensional cells by a scalar index.
+\item With a credible specification, smoothing can decrease finite-sample estimation noise.
+\end{itemize}
+\begin{block}{Angrist and Hahn (2004): a finite-sample perspective}
+Dimension reduction can improve precision when excluded predictors contribute little to outcome variation relative to the burden of estimating their effects.
+\end{block}
+\alert{Trade-off:} potentially useful outcome information versus complexity and sampling noise (plus misspecification risk).
+\end{frame}
+
+\begin{frame}{Paradox III: How Can Estimating a Known Score Help?}
+\small
+\Question: Why can IPW with \(\hat p(X)\) outperform IPW with the \emph{true} \(p(X)\)?
+\medskip
+Start with the Horvitz--Thompson estimator:
+\[
+\hat\tau_{HT}(p)=\frac1n\sum_{i=1}^n\left[\frac{D_iY_i}{p(X_i)}-\frac{(1-D_i)Y_i}{1-p(X_i)}\right].
+\]
+\begin{block}{Hirano, Imbens, and Ridder (2003)}
+Under suitable conditions, an IPW estimator using a \emph{nonparametrically estimated} propensity score can achieve the semiparametric efficiency bound for the ATE.
+\end{block}
+\medskip
+This is \alert{not} a claim that knowing less is better. It compares \emph{specific estimation procedures}: a simple HT estimator with a known score versus an estimator that exploits sample treatment-balance information.
+\end{frame}
+
+\begin{frame}{A Transparent Example: Randomized Treatment with $p=1/2$}
+\small
+Assume Bernoulli random assignment with \(\Pp(D=1)=1/2\). Let \(n_1=\sum_i D_i\), \(n_0=n-n_1\).
+\medskip
+Using the \emph{known} assignment probability:
+\[
+\hat\tau_{HT}(1/2)=\frac{2}{n}\sum_i D_iY_i-\frac{2}{n}\sum_i(1-D_i)Y_i.
+\]
+Using the estimated assignment share \(\hat p=n_1/n\):
+\begin{align*}
+\hat\tau_{HT}(\hat p)
+&=\frac{1}{n}\sum_i\frac{D_iY_i}{n_1/n}-\frac{1}{n}\sum_i\frac{(1-D_i)Y_i}{n_0/n}\\
+&=\boxed{\bar Y_1-\bar Y_0}.
+\end{align*}
+\begin{block}{Intuition}
+Estimated probabilities automatically normalize by the \emph{realized} group sizes, eliminating avoidable fluctuations associated with random treatment counts.
+\end{block}
+\textit{Illustration, not the general proof of the HIR efficiency theorem.}
+\end{frame}
+
+\begin{frame}{The Influence-Function Explanation}
+\footnotesize
+Write \(m_d(X)=\E[Y\mid D=d,X]\) and \(\tau=\E[m_1(X)-m_0(X)]\).
+\medskip
+The influence function of simple IPW with the true score is
+\[
+\phi_{HT}(O)=\frac{DY}{p(X)}-\frac{(1-D)Y}{1-p(X)}-\tau.
+\]
+The efficient influence function in the nonparametric observational-data model is
+\[
+\phi_{eff}(O)=m_1(X)-m_0(X)-\tau
++\frac{D(Y-m_1(X))}{p(X)}-\frac{(1-D)(Y-m_0(X))}{1-p(X)}.
+\]
+Subtract:
+\[
+\boxed{\phi_{HT}(O)-\phi_{eff}(O)
+=(D-p(X))\left[\frac{m_1(X)}{p(X)}+\frac{m_0(X)}{1-p(X)}\right].}
+\]
+\begin{block}{Meaning}
+The raw HT estimator carries extra treatment-assignment fluctuation. Proper score estimation can implicitly remove this component, much like calibration or regression adjustment.
+\end{block}
+\end{frame}
+
+\begin{frame}{Why the ``Paradox'' Does Not Violate Information Theory}
+\small
+\begin{itemize}
+\item \textbf{Known score vs. unknown score:} information about assignment cannot make the optimal achievable precision worse.
+\item \textbf{Known-score HT vs. estimated-score IPW:} these are different \emph{estimators}; the former does not generally use all available information efficiently.
+\item \textbf{Hirano--Imbens--Ridder:} a sufficiently rich and carefully estimated score can make IPW asymptotically efficient under their regularity conditions.
+\end{itemize}
+\medskip
+\begin{block}{A useful alternative}
+Augmented IPW (AIPW) explicitly combines assignment and outcome models:
+\[
+\hat\tau_{AIPW}=\frac1n\sum_i\left[\hat m_1(X_i)-\hat m_0(X_i)+\frac{D_i(Y_i-\hat m_1(X_i))}{\hat p(X_i)}-\frac{(1-D_i)(Y_i-\hat m_0(X_i))}{1-\hat p(X_i)}\right].
+\]
+\end{block}
+\textit{AIPW is a modern connection, beyond the core presentation in Section 3.3.2.}
+\end{frame}
+
+\section{Putting the Three Results Together}
+\begin{frame}{A Subtle Point: Nonparametric Scores May Not Reduce Dimension}
+\small
+Suppose \(X\) is discrete and we estimate a separate propensity score in every cell:
+\[
+\hat p(x)=\frac{n_{1x}}{n_x}.
+\]
+Then, for each cell with both treated and control observations,
+\[
+\frac{1}{n}\sum_{i:X_i=x}\frac{D_iY_i}{\hat p(x)}
+=\frac{n_x}{n}\bar Y_{1x},\qquad
+\frac{1}{n}\sum_{i:X_i=x}\frac{(1-D_i)Y_i}{1-\hat p(x)}
+=\frac{n_x}{n}\bar Y_{0x}.
+\]
+So the plug-in IPW ATE equals
+\[
+\boxed{\hat\tau_{IPW}=\sum_x\frac{n_x}{n}(\bar Y_{1x}-\bar Y_{0x}),}
+\]
+exactly the fully stratified covariate-matching estimator on common-support cells.
+\medskip
+\alert{Angrist's point:} the actual payoff comes from meaningful smoothing, restrictions, and prior knowledge---not merely renaming \(X\) as \(\hat p(X)\).
+\end{frame}
+
+\begin{frame}{Three Papers, Three Different Efficiency Comparisons}
+\small
+\begin{tabular}{p{0.27\textwidth}p{0.34\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Paper} & \textbf{Comparison} & \textbf{Main lesson}\\
+\midrule
+Hahn (1998) & Score-only versus outcome-informed adjustment & Score is sufficient for identification, not necessarily precision.\\[0.75em]
+Angrist \& Hahn (2004) & Rich controls versus restricted-score methods in finite samples & Useful restrictions may reduce estimation noise.\\[0.75em]
+Hirano, Imbens \& Ridder (2003) & True-score HT versus nonparametric estimated-score IPW & Estimating scores can generate efficiency gains.\\
+\bottomrule
+\end{tabular}
+\medskip
+\[
+\boxed{\text{Different comparisons}\;\Longrightarrow\;\text{no genuine contradiction.}}
+\]
+\end{frame}
+
+\begin{frame}{Takeaways: A Practical Decision Sequence}
+\small
+\begin{enumerate}
+\item \textbf{Identification:} Is \((Y_0,Y_1)\perp D\mid X\) credible? Is there overlap?
+\item \textbf{Estimand:} Do we want ATE, ATT, or a variance-weighted regression average?
+\item \textbf{Modeling:} What do we know about treatment assignment? Which covariates predict outcomes?
+\item \textbf{Estimation:} Does score compression help with sparse cells? Is score specification credible?
+\item \textbf{Inference:} Account for score estimation and potentially extreme inverse-probability weights.
+\end{enumerate}
+\medskip
+\begin{block}{The overarching message}
+\centering
+\textbf{Use propensity scores to understand and model assignment,}\par
+\textbf{not because they are automatically superior to regression.}
+\end{block}
+\end{frame}
+
+\begin{frame}{References and Scope}
+\small
+\begin{itemize}
+\item Angrist, J. D., and J.-S. Pischke. \emph{Mostly Harmless Econometrics}, \S3.3.2, pp. 80--86.
+\item Rosenbaum, P. R., and D. B. Rubin (1983). ``The Central Role of the Propensity Score in Observational Studies for Causal Effects.''
+\item Hahn, J. (1998). ``On the Role of the Propensity Score in Efficient Semiparametric Estimation of Average Treatment Effects.''
+\item Angrist, J. D., and J. Hahn (2004). ``When to Control for Covariates? Panel Asymptotics for Estimates of Treatment Effects.''
+\item Hirano, K., G. W. Imbens, and G. Ridder (2003). ``Efficient Estimation of Average Treatment Effects Using the Estimated Propensity Score.''
+\end{itemize}
+\medskip
+\textit{Source organization follows Section 3.3.2. The Bernoulli-randomization example, influence-function decomposition, and AIPW link are added pedagogical explanations.}
+\end{frame}
+\end{document}

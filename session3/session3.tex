@@ -1,0 +1,886 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% =========================================================
+% Packages
+% =========================================================
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% =========================================================
+% Theme
+% =========================================================
+\usetheme{Boadilla}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{DeepBlue}{RGB}{28,66,120}
+\definecolor{DarkGray}{RGB}{55,55,55}
+\definecolor{SoftGray}{RGB}{242,242,242}
+\definecolor{DarkRed}{RGB}{155,45,45}
+\definecolor{DarkGreen}{RGB}{35,110,75}
+
+\setbeamercolor{structure}{fg=DeepBlue}
+\setbeamercolor{frametitle}{fg=DeepBlue}
+\setbeamercolor{title}{fg=DeepBlue}
+\setbeamercolor{block title}{bg=DeepBlue!12,fg=DeepBlue}
+\setbeamercolor{block body}{bg=DeepBlue!3,fg=black}
+\setbeamercolor{alerted text}{fg=DarkRed}
+
+% =========================================================
+% Layout tuning (compact vertical rhythm)
+% =========================================================
+\setbeamersize{text margin left=1.1em,text margin right=1.1em}
+
+% Many slides contain several display equations; the default
+% display skips are the single largest source of overfull frames.
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{3.5pt plus 2pt minus 1.5pt}%
+  \setlength{\belowdisplayskip}{3.5pt plus 2pt minus 1.5pt}%
+  \setlength{\abovedisplayshortskip}{1.5pt plus 1pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{2.5pt plus 1pt minus 1pt}%
+  \setlength{\jot}{2pt}%
+}
+
+% Tighter blocks: trim the space around the box, not its inner padding
+\addtobeamertemplate{block begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block end}{}{\vspace{-0.35em}}
+\addtobeamertemplate{block alerted begin}{\vspace{-0.45em}}{}
+\addtobeamertemplate{block alerted end}{}{\vspace{-0.35em}}
+
+% Tighter lists
+\setlength{\leftmargini}{1.5em}
+\setbeamertemplate{itemize/enumerate body begin}{\vspace{-0.2em}}
+\setbeamertemplate{itemize/enumerate body end}{\vspace{-0.2em}}
+
+% Slightly tighter frame titles
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+
+% Ragged-right table columns; narrow columns look much calmer when
+% they are not hyphenated on nearly every line.
+\newcommand{\NoHyph}{\hyphenpenalty=10000\exhyphenpenalty=10000\relax}
+\newcolumntype{L}[1]{>{\RaggedRight\NoHyph\arraybackslash}p{#1}}
+\newcolumntype{B}[1]{>{\RaggedRight\NoHyph\bfseries\arraybackslash}p{#1}}
+
+% =========================================================
+% Commands
+% =========================================================
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\ATE}{\mathrm{ATE}}
+\newcommand{\ATT}{\mathrm{ATT}}
+\newcommand{\Var}{\operatorname{V}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\indep}{\perp\!\!\!\perp}
+
+\newcommand{\Question}{\textcolor{DarkRed}{\textbf{Question}}}
+\newcommand{\Spec}{\textcolor{DeepBlue}{\textbf{Specification \& Estimand}}}
+\newcommand{\Ident}{\textcolor{DarkGreen}{\textbf{Identification}}}
+\newcommand{\Est}{\textcolor{violet}{\textbf{Estimation}}}
+\newcommand{\Infer}{\textcolor{orange!80!black}{\textbf{Inference}}}
+
+% =========================================================
+% Title
+% =========================================================
+\title{Mostly Harmless Econometrics}
+\subtitle{\textbf{Session 3: Regression and Causality (MHE \ensuremath{\S}3.2)}\\[0.55em]
+CIA $\rightarrow$ Linear causal model $\rightarrow$ Omitted variables bias $\rightarrow$ Bad control}
+\author{Kaiwen Luo}
+\institute{Washington University in St.Louis}
+\date{\today}
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+
+% =========================================================
+\begin{frame}{Today's Question: When Is a Regression Causal?}
+\small
+Section 3.1 showed that regression is the best linear approximation to the CEF.
+That is a statistical fact. Today's question is a causal one.
+\medskip
+\begin{block}{Angrist--Pischke's answer, in one line}
+\centering
+\textbf{A regression is causal when the CEF it approximates is causal.}
+\end{block}
+\medskip
+\begin{enumerate}
+\setlength{\itemsep}{0.25em}
+\item \textbf{CIA:} when does the CEF $\E[Y_i\mid X_i,s_i]$ have a causal meaning?
+\item \textbf{Credibility:} in which settings is the CIA believable?
+\item \textbf{Linearity:} what extra assumptions turn the causal CEF into $\alpha+\rho s_i+X_i'\gamma$?
+\item \textbf{OVB:} how do short and long regression coefficients relate?
+\item \textbf{Choosing controls:} the job of $X_i$ is to make the CIA credible.
+\item \textbf{Bad control:} two ways that adding a control makes things worse.
+\end{enumerate}
+\end{frame}
+
+% =========================================================
+\section{The CIA Makes the CEF Causal}
+% =========================================================
+\begin{frame}{Start with a Binary Treatment: College}
+\small
+Let $c_i\in\{0,1\}$ indicate college attendance, with potential earnings
+\[
+\text{Potential outcome}=
+\begin{cases}
+Y_{1i} & \text{if } c_i=1\\
+Y_{0i} & \text{if } c_i=0
+\end{cases}
+\qquad\Longrightarrow\qquad
+Y_i=Y_{0i}+(Y_{1i}-Y_{0i})\,c_i .
+\]
+We see only one of $Y_{1i},Y_{0i}$. A naive comparison of means gives
+\[
+\underbrace{\E[Y_i\mid c_i=1]-\E[Y_i\mid c_i=0]}_{\text{observed difference}}
+=\underbrace{\E[Y_{1i}-Y_{0i}\mid c_i=1]}_{\text{ATT}}
++\underbrace{\E[Y_{0i}\mid c_i=1]-\E[Y_{0i}\mid c_i=0]}_{\text{selection bias}}.
+\tag{3.2.1}
+\]
+\begin{block}{Why the naive comparison fails}
+College-goers would probably have earned more \emph{even without college}: $\E[Y_{0i}\mid c_i=1]>\E[Y_{0i}\mid c_i=0]$.
+Selection bias is positive, so the raw gap \alert{overstates} the return to college.
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{The Conditional Independence Assumption (CIA)}
+\small
+\begin{block}{CIA (selection on observables)}
+\[
+\{Y_{0i},Y_{1i}\}\ \indep\ c_i \mid X_i .
+\tag{3.2.2}
+\]
+Among people with the same $X_i$, college attendance is unrelated to potential earnings.
+\end{block}
+\medskip
+Compare people \emph{with the same} $X_i$:
+\[
+\begin{aligned}
+\E[Y_i\mid X_i,c_i=1]-\E[Y_i\mid X_i,c_i=0]
+&=\E[Y_{1i}\mid X_i,c_i=1]-\E[Y_{0i}\mid X_i,c_i=0]\\
+&=\E[Y_{1i}\mid X_i]-\E[Y_{0i}\mid X_i] \qquad\text{(CIA)}\\
+&=\boxed{\E[Y_{1i}-Y_{0i}\mid X_i].}
+\end{aligned}
+\]
+Within an $X_i$-cell, selection bias is zero:
+$\E[Y_{0i}\mid X_i,c_i=1]-\E[Y_{0i}\mid X_i,c_i=0]=0$.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Many Treatment Levels: Years of Schooling $s_i$}
+\small
+Each person has a whole \alert{potential earnings function}:
+\[
+Y_{si}\equiv f_i(s)\quad\text{= what $i$ would earn with $s$ years of schooling.}
+\]
+College vs.\ no college is the special case $Y_{0i}=f_i(12)$, $Y_{1i}=f_i(16)$. The data reveal only $Y_i=f_i(s_i)$.
+\begin{block}{CIA for a multivalued treatment}
+\[
+Y_{si}\ \indep\ s_i\mid X_i \quad\text{for all } s.
+\]
+\end{block}
+Then, for every value $s$,
+\[
+\E[Y_i\mid X_i,s_i=s]=\E[f_i(s)\mid X_i,s_i=s]=\boxed{\E[f_i(s)\mid X_i].}
+\]
+\textbf{So the CEF \emph{is} the average causal response function.} Differences along it are causal:
+\[
+\E[Y_i\mid X_i,s_i=12]-\E[Y_i\mid X_i,s_i=11]=\E[f_i(12)-f_i(11)\mid X_i].
+\]
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{From Cell-by-Cell Effects to One Number}
+\small
+The CIA gives one causal effect for \emph{each value} of $X_i$. Summarize them by iterating expectations.
+\begin{columns}[T]
+\begin{column}{0.49\textwidth}
+\begin{block}{Average effect (ATE)}
+\vspace{-0.6em}
+\[
+\begin{aligned}
+&\E\big\{\E[Y_i\mid X_i,s_i{=}12]-\E[Y_i\mid X_i,s_i{=}11]\big\}\\
+&\quad=\E[f_i(12)-f_i(11)]
+\end{aligned}
+\]
+Weights: distribution of $X_i$ in the population.
+\end{block}
+\end{column}
+\begin{column}{0.49\textwidth}
+\begin{block}{Effect on the treated (ATT)}
+\vspace{-0.6em}
+\[
+\begin{aligned}
+&\E\big\{\E[Y_i\mid X_i,s_i{=}12]-\E[Y_i\mid X_i,s_i{=}11]\,\big|\,s_i{=}12\big\}\\
+&\quad=\E[f_i(12)-f_i(11)\mid s_i=12]
+\end{aligned}
+\]
+Weights: distribution of $X_i$ among graduates.
+\end{block}
+\end{column}
+\end{columns}
+\medskip
+The empirical counterpart is a \textbf{matching estimator}: compare within $X$-cells, then average.
+\begin{itemize}
+\item It takes two steps (match, then average), and standard errors are not automatic.
+\item With many values of $s_i$ there is a separate effect for each increment $s-1\to s$.
+\end{itemize}
+\alert{$\Rightarrow$ Regression: an automatic way to turn the CIA into one causal summary.}
+\end{frame}
+
+% =========================================================
+\section{When Is the CIA Credible?}
+% =========================================================
+\begin{frame}{The CIA Is a Claim About How $s_i$ Was Assigned}
+\small
+CIA $=$ ``conditional on $X_i$, $s_i$ is \emph{as good as randomly assigned}.''
+It is credible when we know \textbf{what determines $s_i$} and we observe it.
+\medskip
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}L{2.6cm}L{5.0cm}L{5.4cm}@{}}
+\toprule
+\textbf{Scenario} & \textbf{Example} & \textbf{Why the CIA is plausible}\\
+\midrule
+\textbf{1. Random assignment given $X_i$}
+& Black et al.\ (2003): mandatory retraining for UI claimants; Tennessee STAR
+& Workers sorted into groups by observed traits and job history; oversubscribed groups assigned training \emph{by lottery}. Given the group variables, training is random by design.\\
+\textbf{2. Institutional knowledge of selection}
+& Angrist (1998): voluntary military service
+& The military screens applicants on age, schooling, AFQT score. Given these, remaining variation comes from qualified applicants who drop out at the last minute.\\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\alert{Even then, not guaranteed:} why a qualified applicant fails to enlist could be related to earnings potential.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Schooling: The Hard Case}
+\small
+\begin{itemize}
+\setlength{\itemsep}{0.45em}
+\item There is usually \alert{no lottery} for finishing high school or going to college.
+\item Closest analog: an \emph{encouragement} experiment among people with similar ability and family background.
+\begin{itemize}
+\item Education Maintenance Allowance (Dearden et al.\ 2003): pays UK students in some areas to stay in school.
+\end{itemize}
+\item Otherwise we must argue that $X_i$ captures everything that drives both schooling and earnings:
+\[
+X_i=\{\text{ability, family background, motivation},\dots\}.
+\]
+\end{itemize}
+\medskip
+\begin{block}{The question to ask of any control set}
+\centering
+\textit{Besides $X_i$, what else makes people with different $s_i$ different in their potential earnings?}\\[0.2em]
+If the answer is ``nothing important,'' the CIA is credible.
+\end{block}
+\end{frame}
+
+% =========================================================
+\section{From the Causal CEF to a Linear Regression}
+% =========================================================
+\begin{frame}{Step 0: The CIA Identifies the CEF but Not Its Shape}
+\small
+Define the CEF $m(s,x)=\E[Y_i\mid s_i=s,X_i=x]$. Identically,
+\[
+Y_i=m(s_i,X_i)+\varepsilon_i,\qquad \E[\varepsilon_i\mid s_i,X_i]=0.
+\]
+This is a decomposition (Theorem 3.1.1), not an economic model.
+\begin{block}{Under the CIA (plus overlap: $s$ is in the support of $s_i\mid X_i=x$)}
+\[
+\boxed{m(s,x)=\E[f_i(s)\mid X_i=x].}
+\]
+\end{block}
+The marginal causal effect is $\partial m(s,x)/\partial s$. It may vary with the schooling level $s$ \emph{and} with characteristics $x$.
+\medskip
+\[
+\boxed{\text{The CIA tells us what }m(s,x)\text{ means; it does not tell us what it looks like.}}
+\]
+The regression $Y_i=\alpha+\rho s_i+X_i'\gamma+v_i$ needs three more restrictions.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{A1: Constant Marginal Response in $s$}
+\small
+\begin{block}{Assumption A1: no curvature in schooling (given $X$)}
+\[
+\boxed{\frac{\partial m(s,x)}{\partial s}=\rho(x).}
+\]
+Within a group $x$, the 11th year pays the same as the 16th.
+\end{block}
+Integrating along a connected treatment interval containing zero:
+\[
+m(s,x)-m(0,x)=\int_0^s\rho(x)\,dt=s\rho(x).
+\]
+Hence, writing $g(x)=m(0,x)$,
+\[
+\boxed{m(s,x)=g(x)+s\rho(x).}
+\]
+\textbf{Economic content:} linear dose response \emph{within} a group; returns may still differ \emph{across} groups.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{A2: Same Average Return Across Groups}
+\small
+\begin{block}{Assumption A2: common conditional average marginal effect}
+\[
+\boxed{\rho(x)=\rho\quad\text{for all relevant }x.}
+\]
+\end{block}
+Combining A1 and A2,
+\[
+\boxed{m(s,x)=\rho s+g(x)}
+\quad\Longrightarrow\quad
+Y_i=\rho s_i+g(X_i)+\varepsilon_i,\qquad \E[\varepsilon_i\mid s_i,X_i]=0.
+\]
+\begin{block}{Partially linear regression (PLR)}
+The causal effect of $s$ is constant, but the baseline relationship $g(x)$ is left unrestricted.
+\end{block}
+\medskip
+\textbf{What ``homogeneous'' means here:} for any supported $s_1,s_0$,
+\[
+\E[f_i(s_1)-f_i(s_0)\mid X_i=x]=\rho\,(s_1-s_0).
+\]
+This restricts \emph{average} effects across observed groups, not every individual's $f_i(\cdot)$.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{A3: A Linear Baseline in $X$}
+\small
+\begin{block}{Assumption A3: additive and linear baseline}
+\[
+\boxed{g(x)=\alpha+x'\gamma.}
+\]
+No nonlinear $X$ terms, no interactions in the baseline.
+\end{block}
+Substituting into the PLR model:
+\[
+\boxed{\E[Y_i\mid s_i,X_i]=\alpha+\rho s_i+X_i'\gamma}
+\quad\Longleftrightarrow\quad
+Y_i=\alpha+\rho s_i+X_i'\gamma+v_i,\quad \E[v_i\mid s_i,X_i]=0.
+\]
+\medskip
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{$\rho$}
+Causal: needs the CIA + A1 + A2.
+\end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{block}{$\gamma$}
+\alert{Not causal}: the CIA is about $s_i$, not about $X_i$. $\gamma$ just describes how baseline earnings vary with $X_i$.
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Angrist--Pischke's Version: A Linear Constant-Effects Model}
+\small
+MHE imposes the same structure in one step, at the \emph{individual} level:
+\[
+f_i(s)=\alpha+\rho s+\eta_i,\qquad \E[\eta_i]=0 .
+\tag{3.2.7}
+\]
+Everyone has the same slope $\rho$ (A1 + A2, and more); $\eta_i$ collects unobserved determinants of potential earnings.
+Then decompose $\eta_i$ by its regression on $X_i$ (this is A3):
+\[
+\eta_i=X_i'\gamma+v_i,\qquad \E[\eta_i\mid X_i]=X_i'\gamma .
+\]
+By the CIA,
+\[
+\E[f_i(s)\mid X_i,s_i]=\E[f_i(s)\mid X_i]=\alpha+\rho s+X_i'\gamma .
+\]
+\begin{block}{The causal regression}
+\vspace{-0.4em}
+\[
+Y_i=\alpha+\rho s_i+X_i'\gamma+v_i .
+\tag{3.2.9}
+\]
+$v_i$ is uncorrelated with $s_i$ and $X_i$, so the population regression coefficient on $s_i$ is the causal effect $\rho$.
+\end{block}
+\alert{Key assumption:} $X_i$ is the \emph{only} reason why $\eta_i$ and $s_i$ are correlated (Barnow, Cain, and Goldberger, 1981).
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Summary: The Assumption Ladder}
+\small
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{@{}L{2.50cm}L{5.4cm}L{5.2cm}@{}}
+\toprule
+\textbf{Step} & \textbf{Restriction} & \textbf{What we obtain}\\
+\midrule
+Identity & $m(s,x)=\E[Y_i\mid s_i=s,X_i=x]$ & A prediction function, nothing causal\\
+Identification & CIA $+$ overlap & $m(s,x)=\E[f_i(s)\mid X_i=x]$\\
+A1 & Return does not vary with $s$ given $x$ & $g(x)+s\rho(x)$\\
+A2 & $\rho(x)=\rho$ across $x$ & $g(x)+\rho s$ (PLR)\\
+A3 & $g(x)=\alpha+x'\gamma$ & $\alpha+\rho s+x'\gamma$\\
+\midrule
+MHE (3.2.7) & $f_i(s)=\alpha+\rho s+\eta_i$, $\E[\eta_i\mid X_i]=X_i'\gamma$ & A1--A3 at once (stronger: same $\rho$ for every $i$)\\
+\bottomrule
+\end{tabular}
+\medskip
+\begin{block}{Central message}
+\textbf{Causal identification} (CIA) and \textbf{functional form} (A1--A3) are logically separate.
+If A1--A3 fail, regression still approximates the causal CEF (MHE \ensuremath{\S}3.3).
+\end{block}
+\end{frame}
+
+% =========================================================
+\section{The Omitted Variables Bias Formula}
+% =========================================================
+\begin{frame}{Long and Short Regressions}
+\small
+Let $A_i$ (``ability'') collect family background, intelligence, motivation. The \textbf{long regression}:
+\[
+Y_i=\alpha+\rho s_i+A_i'\gamma+e_i,
+\tag{3.2.10}
+\]
+where $e_i$ is a regression residual, uncorrelated with $s_i$ and $A_i$ \emph{by construction}.
+If the CIA holds given $A_i$, then $\rho$ is the causal effect in (3.2.7).
+\medskip
+\textbf{Problem:} $A_i$ is rarely observed (e.g., the CPS has no ability or family background), so we run the \textbf{short regression} of $Y_i$ on $s_i$ alone.
+\begin{block}{Omitted variables bias formula}
+\vspace{-0.4em}
+\[
+\underbrace{\frac{\Cov(Y_i,s_i)}{\Var(s_i)}}_{\text{short}}
+=\underbrace{\rho}_{\text{long}}+\underbrace{\gamma'}_{\text{effect of omitted}}\ \underbrace{\delta_{As}}_{\text{omitted on included}},
+\tag{3.2.11}
+\]
+where $\delta_{As}$ is the vector of coefficients from regressing each element of $A_i$ on $s_i$.
+\end{block}
+\centering
+\textit{Short equals long plus the effect of omitted times the regression of omitted on included.}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Deriving OVB: Two Lines}
+\small
+Plug the long regression into the short-regression slope:
+\[
+\begin{aligned}
+\Cov(Y_i,s_i)
+&=\Cov(\alpha+\rho s_i+A_i'\gamma+e_i,\ s_i)\\
+&=\rho\,\Var(s_i)+\gamma'\Cov(A_i,s_i)+\underbrace{\Cov(e_i,s_i)}_{=0\ \text{(long residual)}} .
+\end{aligned}
+\]
+Divide by $\Var(s_i)$ and note $\delta_{As}=\Cov(A_i,s_i)/\Var(s_i)$:
+\[
+\frac{\Cov(Y_i,s_i)}{\Var(s_i)}=\rho+\gamma'\delta_{As}. \qquad\blacksquare
+\]
+\begin{block}{Three things to notice}
+\begin{enumerate}
+\item \textbf{Mechanical:} the formula holds whether or not the long regression is causal.
+\item \textbf{Short $=$ long} iff $\gamma'\delta_{As}=0$, e.g.\ omitted variables are uncorrelated with $s_i$ (cf.\ regression anatomy).
+\item \textbf{Multivariate version:} $\beta_1^s=\beta_1^l+\E[X_{1i}X_{1i}']^{-1}\E[X_{1i}X_{2i}']\,\beta_2^l$.
+\end{enumerate}
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Signing the Bias}
+\small
+With a scalar omitted variable, the bias is $\gamma\,\delta_{As}$: two signs to guess.
+\medskip
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& $\delta_{As}>0$ (omitted $\uparrow$ with $s_i$) & $\delta_{As}<0$ (omitted $\downarrow$ with $s_i$)\\
+\midrule
+$\gamma>0$ (omitted raises $Y_i$) & \alert{short too big} & short too small\\
+$\gamma<0$ (omitted lowers $Y_i$) & short too small & \alert{short too big}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\medskip
+\begin{block}{Ability and schooling}
+\begin{itemize}
+\item Ability raises wages: $\gamma>0$. More able people likely get more schooling: $\delta_{As}>0$.
+\item[$\Rightarrow$] The short regression is probably \alert{too big}.
+\item But $\delta_{As}>0$ is not a theorem: for very able people, the opportunity cost of schooling is high (Mick Jagger left the LSE, Bill Gates left Harvard).
+\end{itemize}
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{OVB at Work: Returns to Schooling in the NLSY}
+\small
+Coefficient on years of schooling, log wage regressions, NLSY79 men (MHE Table 3.2.1):
+\medskip
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+& (1) & (2) & (3) & (4) & (5)\\
+\midrule
+Controls & None & Age dummies & (2) $+$ parents' educ., & (3) $+$ AFQT & (4) $+$ occupation\\
+& & & race, region & & dummies\\
+\midrule
+$\hat\rho$ & .132 & .131 & .114 & .087 & .066\\
+& (.007) & (.007) & (.007) & (.009) & (.010)\\
+\bottomrule
+\end{tabular}
+\end{center}
+\medskip
+\begin{itemize}
+\setlength{\itemsep}{0.35em}
+\item (1)$\to$(3)$\to$(4): $\hat\rho$ falls as family background and AFQT are added.
+\item OVB reading: these controls are \emph{positively correlated with both wages and schooling} ($\gamma>0,\ \delta_{As}>0$).
+\item Column (5) also falls. Is occupation one more omitted variable? \alert{No: hold that thought.}
+\end{itemize}
+\end{frame}
+
+% =========================================================
+\section{What Are Controls For?}
+% =========================================================
+\begin{frame}{Controls Exist to Make the CIA Credible}
+\small
+Saying ``my estimate has no OVB'' means ``my regression is the long regression I want,''
+and the regression we want is the one with a causal interpretation:
+\[
+\text{no OVB claim}\quad\Longleftrightarrow\quad Y_{si}\ \indep\ s_i\mid X_i\ \text{for my chosen }X_i .
+\]
+\begin{block}{So the right question is not \dots}
+\begin{itemize}
+\item ``What raises my $R^2$?''
+\item ``What is correlated with $Y_i$?''
+\item ``What changes $\hat\rho$ when I add it?''
+\end{itemize}
+\end{block}
+\begin{block}{\dots but}
+\centering
+\textbf{Conditional on which $X_i$ is $s_i$ as good as randomly assigned?}
+\end{block}
+\medskip
+OVB says to include variables with $\gamma\neq0$ and $\delta_{As}\neq0$. That is necessary but \alert{not sufficient}:
+occupation is correlated with both schooling and wages, and is still a bad control.
+\end{frame}
+
+% =========================================================
+\section{Bad Control}
+% =========================================================
+\begin{frame}{Good Controls and Bad Controls}
+\small
+More control is not always better.
+\medskip
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{Good control}
+A variable we can think of as \textbf{fixed at the time $s_i$ was determined}.\\[0.3em]
+\textit{e.g.} parents' education, race, 8th-grade test score.
+\end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{block}{Bad control}
+A variable that is itself an \textbf{outcome of $s_i$}: it might just as well be a dependent variable.\\[0.3em]
+\textit{e.g.} occupation, a post-schooling test score.
+\end{block}
+\end{column}
+\end{columns}
+\medskip
+\begin{block}{Two versions (MHE \ensuremath{\S}3.2.3)}
+\begin{enumerate}
+\item \textbf{Outcome as control:} conditioning on occupation in a schooling regression.
+\item \textbf{Proxy control:} using a later ability measure, itself raised by schooling, in place of early ability.
+\end{enumerate}
+\end{block}
+\medskip
+Both are versions of \alert{selection bias}, more subtle than the one in (3.2.1).
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Bad Control I: Setup}
+\small
+College $c_i$ affects two outcomes: earnings $Y_i$ and white-collar status $w_i$.
+\[
+Y_i=c_iY_{1i}+(1-c_i)Y_{0i},\qquad
+w_i=c_iw_{1i}+(1-c_i)w_{0i}.
+\]
+Make the best case: $c_i$ is \textbf{randomly assigned}, so $c_i\indep\{Y_{1i},Y_{0i},w_{1i},w_{0i}\}$. Then both causal effects are easy:
+\[
+\begin{aligned}
+\E[Y_i\mid c_i=1]-\E[Y_i\mid c_i=0]&=\E[Y_{1i}-Y_{0i}],\\
+\E[w_i\mid c_i=1]-\E[w_i\mid c_i=0]&=\E[w_{1i}-w_{0i}].
+\end{aligned}
+\]
+Just regress $Y_i$ and $w_i$ on $c_i$.
+\medskip
+\begin{block}{The tempting idea}
+Occupation is correlated with both college and pay. So compare college and non-college workers
+\emph{within} white-collar jobs, i.e.\ add $w_i$ as a control, or regress $Y_i$ on $c_i$ in the $w_i=1$ sample.
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Bad Control I: Conditioning on an Outcome}
+\small
+Among white-collar workers, $\E[Y_i\mid w_i=1,c_i=1]-\E[Y_i\mid w_i=1,c_i=0]$
+\[
+\begin{aligned}
+&=\E[Y_{1i}\mid w_{1i}=1,c_i=1]-\E[Y_{0i}\mid w_{0i}=1,c_i=0]\\
+&=\E[Y_{1i}\mid w_{1i}=1]-\E[Y_{0i}\mid w_{0i}=1]\qquad\text{(random $c_i$)}\\
+&=\underbrace{\E[Y_{1i}-Y_{0i}\mid w_{1i}=1]}_{\text{causal effect}}
++\underbrace{\E[Y_{0i}\mid w_{1i}=1]-\E[Y_{0i}\mid w_{0i}=1]}_{\text{selection bias}} .
+\end{aligned}
+\]
+\begin{block}{Why: college changes \emph{who} is in the white-collar pool}
+\begin{itemize}
+\item Treated group: people who are white collar \emph{with} college ($w_{1i}=1$).
+\item Control group: people who are white collar \emph{without} college ($w_{0i}=1$): probably special, with high $Y_{0i}$.
+\item[$\Rightarrow$] Apples vs.\ oranges, even though $c_i$ was randomized. Selection bias here is probably \alert{negative}.
+\end{itemize}
+\end{block}
+Even if $Y_{1i}=Y_{0i}$ for everyone, this comparison is generally nonzero. Nor is it ``the effect of college not explained by occupation.''
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Bad Control I: A Numerical Illustration}
+\small
+Suppose college has \alert{zero} effect on earnings ($Y_{1i}=Y_{0i}$) but does open white-collar doors. Three types:
+\medskip
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Type & Share & $(w_{0i},w_{1i})$ & $Y_{0i}=Y_{1i}$ & White collar if \dots\\
+\midrule
+Always white collar & 0.2 & $(1,1)$ & 60 & always\\
+White collar only with college & 0.3 & $(0,1)$ & 40 & $c_i=1$\\
+Never white collar & 0.5 & $(0,0)$ & 30 & never\\
+\bottomrule
+\end{tabular}
+\end{center}
+\medskip
+With $c_i$ randomized, among white-collar workers:
+\[
+\E[Y_i\mid w_i{=}1,c_i{=}1]=\frac{0.2\cdot60+0.3\cdot40}{0.5}=48,
+\qquad
+\E[Y_i\mid w_i{=}1,c_i{=}0]=60.
+\]
+\begin{block}{Result}
+The ``within-occupation return to college'' is $48-60=\alert{-12}$, while the true effect is $0$.
+The gap comes entirely from the change in who is white collar.
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Back to the NLSY: Column (5)}
+\small
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& (4) $+$ AFQT & (5) $+$ occupation dummies\\
+\midrule
+$\hat\rho$ & .087 & .066\\
+\bottomrule
+\end{tabular}
+\end{center}
+\medskip
+\begin{itemize}
+\setlength{\itemsep}{0.5em}
+\item Adding two-digit occupation dummies lowers the schooling coefficient.
+\item OVB would read this as ``occupation was an omitted variable.'' But occupation is an \alert{outcome of schooling}.
+\item The drop may be nothing more than the selection bias from the previous slides.
+\end{itemize}
+\medskip
+\begin{block}{Rule}
+\centering
+Control only for variables that are \textbf{not themselves caused by} the regressor of interest.
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Bad Control II: Proxy Control}
+\small
+The regression we want uses \textbf{early ability} $a_i$ (e.g.\ an 8th-grade IQ score, measured before schooling choices):
+\[
+Y_i=\alpha+\rho s_i+\gamma a_i+e_i,\qquad \E[s_ie_i]=\E[a_ie_i]=0 .
+\tag{3.2.13}
+\]
+$a_i$ is a good control but unavailable. We only have \textbf{late ability} $a_{li}$, measured after schooling (e.g.\ a job-screening test), which schooling also raises:
+\[
+a_{li}=\pi_0+\pi_1 s_i+\pi_2 a_i .
+\tag{3.2.14}
+\]
+Solve for $a_i=(a_{li}-\pi_0-\pi_1 s_i)/\pi_2$ and substitute into (3.2.13):
+\[
+Y_i=\Big(\alpha-\gamma\frac{\pi_0}{\pi_2}\Big)
++\boxed{\Big(\rho-\gamma\frac{\pi_1}{\pi_2}\Big)}\,s_i
++\frac{\gamma}{\pi_2}\,a_{li}+e_i .
+\tag{3.2.15}
+\]
+\begin{block}{Result}
+With $\gamma,\pi_1,\pi_2>0$, the coefficient on $s_i$ is \alert{too small}, unless $\pi_1=0$ (schooling does not affect the late test).
+\end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Proxy Control Can Still Help: Bounds}
+\small
+Unlike the occupation case, the intention here is good: we \emph{want} to control for ability.
+\medskip
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{No control (OVB formula)}
+\vspace{-0.4em}
+\[
+\rho+\gamma\,\delta_{as}\ \ \ge\ \rho
+\]
+if $\gamma>0,\ \delta_{as}>0$.
+\end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{block}{Proxy control (3.2.15)}
+\vspace{-0.4em}
+\[
+\rho-\gamma\,\frac{\pi_1}{\pi_2}\ \ \le\ \rho
+\]
+if $\gamma,\pi_1,\pi_2>0$.
+\end{block}
+\end{column}
+\end{columns}
+\medskip
+\[
+\boxed{\rho-\gamma\frac{\pi_1}{\pi_2}\ \le\ \rho\ \le\ \rho+\gamma\,\delta_{as}}
+\]
+\begin{itemize}
+\setlength{\itemsep}{0.4em}
+\item The causal effect lies \textbf{between} the short estimate and the proxy-controlled estimate.
+\item The proxy estimate may be closer to $\rho$ than no control at all.
+\item $\pi_1$ can be partly checked: if $a_{li}$ does not move with $s_i$, assuming $\pi_1=0$ is more comfortable.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{The Moral: Timing Matters}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}L{2.7cm}L{3.4cm}L{3.3cm}L{3.6cm}@{}}
+\toprule
+& \textbf{Example} & \textbf{Determined} & \textbf{Effect on $\hat\rho$}\\
+\midrule
+Good control & Parents' education, early IQ $a_i$ & Before $s_i$ & Removes OVB if the CIA holds given it\\
+Outcome control & Occupation $w_i$ & After, \emph{by} $s_i$ & Selection bias, any sign; not interpretable\\
+Proxy control & Late ability $a_{li}$ & After, partly by $s_i$ & Biased toward zero; useful as a bound\\
+\bottomrule
+\end{tabular}
+\medskip
+\begin{block}{Practical rule}
+\begin{itemize}
+\item Variables measured \textbf{before} $s_i$ was determined are generally good controls: they cannot be outcomes of $s_i$.
+\item If timing is unclear, state explicitly what happened first, or argue that no control is caused by $s_i$.
+\end{itemize}
+\end{block}
+\end{frame}
+
+% =========================================================
+\section{Takeaways}
+% =========================================================
+\begin{frame}{Takeaways}
+\small
+\begin{enumerate}
+\setlength{\itemsep}{0.7em}
+\item \textbf{CIA makes the CEF causal:} $\E[Y_i\mid X_i,s_i=s]=\E[f_i(s)\mid X_i]$. Within $X$-cells, selection bias vanishes.
+\item \textbf{The CIA is credible} when we know how $s_i$ was assigned: lotteries within groups, or well-understood institutional screening.
+\item \textbf{Linearity is extra:} constant returns in $s$ (A1), common across groups (A2), linear baseline (A3), or MHE's $f_i(s)=\alpha+\rho s+\eta_i$.
+\item \textbf{OVB:} short $=$ long $+\ \gamma'\delta_{As}$. Mechanical, and a quick way to sign bias.
+\item \textbf{Controls serve the CIA:} include what makes $s_i$ as good as random; \alert{exclude} what $s_i$ causes.
+\end{enumerate}
+\medskip
+\[
+\boxed{\text{Good control: fixed before } s_i\qquad\text{Bad control: an outcome of } s_i}
+\]
+\end{frame}
+
+\begin{frame}{References}
+\small
+\begin{itemize}
+\setlength{\itemsep}{0.45em}
+\item Angrist and Pischke (2009), \emph{Mostly Harmless Econometrics}, \ensuremath{\S}3.2.
+\item Barnow, Cain, and Goldberger (1981), ``Issues in the Analysis of Selectivity Bias,'' \emph{Evaluation Studies Review Annual}.
+\item Black, Smith, Berger, and Noel (2003), ``Is the Threat of Reemployment Services More Effective than the Services Themselves?'' \emph{AER}.
+\item Angrist (1998), ``Estimating the Labor Market Impact of Voluntary Military Service Using Social Security Data on Military Applicants,'' \emph{Econometrica}.
+\item Griliches and Mason (1972), ``Education, Income, and Ability,'' \emph{JPE}.
+\item Robinson (1988), ``Root-$N$-Consistent Semiparametric Regression,'' \emph{Econometrica}.
+\end{itemize}
+\medskip
+\begin{block}{Next: MHE \ensuremath{\S}3.3}
+When A1--A3 fail, what does the regression coefficient on $s_i$ average? (Backup slides follow.)
+\end{block}
+\end{frame}
+
+% =========================================================
+\appendix
+\section*{Backup: When the Linear Model Is Misspecified}
+% =========================================================
+\begin{frame}{Backup: OLS Exists Even When the CEF Is Nonlinear}
+\small
+The population linear projection is defined by
+\[
+(\alpha^{LP},\rho^{LP},\gamma^{LP})
+=\arg\min_{a,b,c}\E[(Y_i-a-bs_i-X_i'c)^2].
+\]
+Write $R_i=s_i-\operatorname{Proj}_{\mathrm{lin}}(s_i\mid1,X_i)$. By regression anatomy (FWL),
+\[
+\boxed{\rho^{LP}=\frac{\E[R_iY_i]}{\E[R_i^2]}.}
+\]
+Under the CIA,
+\[
+\rho^{LP}=\frac{\E[R_i\,m(s_i,X_i)]}{\E[R_i^2]}.
+\]
+\begin{block}{Warning}
+When $m$ is nonlinear, the OLS coefficient still exists, but it \alert{need not equal an ATE or an average causal derivative}.
+\end{block}
+\end{frame}
+
+\begin{frame}{Backup: Partialling Out with Heterogeneous Effects}
+\small
+Allow $m(s,x)=g(x)+s\rho(x)$: keep A1, drop A2 and A3.
+Let $V_i=s_i-\E[s_i\mid X_i]$ and define
+\[
+\rho^{PO}=\frac{\E[V_i\{Y_i-\E[Y_i\mid X_i]\}]}{\E[V_i^2]}.
+\]
+Iterating expectations,
+\[
+\E[V_iY_i\mid X_i]=\rho(X_i)\E[V_i s_i\mid X_i]
+=\rho(X_i)\Var(s_i\mid X_i).
+\]
+Thus
+\[
+\boxed{\rho^{PO}=
+\frac{\E[\Var(s_i\mid X_i)\,\rho(X_i)]}
+{\E[\Var(s_i\mid X_i)]}.}
+\]
+\begin{block}{Interpretation}
+Groups with more residual variation in schooling get more weight: a \emph{variance-weighted} causal slope, not $\E[\rho(X_i)]$.
+This is the continuous analog of MHE (3.3.7).
+\end{block}
+\end{frame}
+
+\begin{frame}{Backup: Linear OLS vs.\ Nonparametric Partialling Out}
+\small
+\renewcommand{\arraystretch}{1.24}
+\begin{tabular}{@{}L{3.05cm}L{4.4cm}L{4.45cm}@{}}
+\toprule
+& \textbf{Linear OLS controls} & \textbf{Full CEF controls}\\
+\midrule
+Residual treatment & $R_i=s_i-\operatorname{Proj}_{lin}(s_i\mid1,X_i)$ & $V_i=s_i-\E[s_i\mid X_i]$\\
+Conditioning on $X$ & Linear projection & Potentially nonlinear\\
+General estimand & $\E[R_iY_i]/\E[R_i^2]$ & $\E[V_iY_i]/\E[V_i^2]$\\
+With $m(s,x)=g(x)+s\rho(x)$ & May mix baseline misspecification with the treatment effect & Variance-weighted mean of $\rho(X_i)$\\
+\bottomrule
+\end{tabular}
+\medskip
+\begin{block}{When do they coincide?}
+If $\E[s_i\mid X_i]$ is linear in $(1,X_i)$, e.g.\ a saturated model in $X_i$, then $R_i=V_i$ and the two coefficients coincide.
+\end{block}
+\end{frame}
+\end{document}
